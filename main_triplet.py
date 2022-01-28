@@ -15,7 +15,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 # SimCLR
 from simclr import SimCLR
-from simclr.modules import NT_Xent, get_resnet, MedianTripletHead, SmoothTripletHead, TripletNNPULoss
+from simclr.modules import NT_Xent, get_resnet, MedianTripletHead, SmoothTripletHead, TripletNNPULoss, HeadNNPU
 from simclr.modules.transformations import TransformsSimCLR
 from simclr.modules.sync_batchnorm import convert_model
 
@@ -131,7 +131,8 @@ def main(gpu, args):
 
     # optimizer / loss
     optimizer, scheduler = load_optimizer(args, model)
-    criterion = TripletNNPULoss(prior=0.1, k = args.batch_size//2) # SmoothTripletHead(k=args.batch_size-1) #MedianTripletHead() #NT_Xent(args.batch_size, args.temperature, args.world_size)
+    criterion = HeadNNPU(prior = 0.1, latent_size=args.projection_dim) #TripletNNPULoss(prior=0.1, k = args.batch_size//2) 
+    # SmoothTripletHead(k=args.batch_size-1) #MedianTripletHead() #NT_Xent(args.batch_size, args.temperature, args.world_size)
 
     # DDP / DP
     if args.dataparallel:
