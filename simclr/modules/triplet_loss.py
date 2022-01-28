@@ -166,7 +166,7 @@ class HeadNNPU(nn.Module):
         self.prior = prior
         self.prior_prime = 0.5
         self.latent_size = latent_size
-        self.predictor = nn.Linear(latent_size, 1)
+        self.predictor = nn.Linear(latent_size, 1).cuda()
         self.prior = prior
         self.prior_prime = prior_prime
         self.gamma = gamma
