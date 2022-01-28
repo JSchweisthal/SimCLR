@@ -153,3 +153,88 @@ class TripletNNPULoss(nn.Module):
         loss = torch.cat(losses).mean()
 
         return loss # dict(loss=loss_triplet)
+
+
+class HeadNNPU(nn.Module):
+    def __init__(self, prior, prior_prime=0.5,
+                 loss=(lambda x: torch.sigmoid(-x)), gamma=1, beta=0, nnPU=True, latent_size=2048):
+        super(HeadNNPU, self).__init__()
+        # self.predictor = builder.build_neck(predictor)
+        # self.size_average = size_average
+        # self.ranking_loss = nn.MarginRankingLoss(margin=2)
+        self.gamma = gamma
+        self.prior = prior
+        self.prior_prime = 0.5
+        self.latent_size = latent_size
+        self.predictor = nn.Linear(latent_size, 1)
+        self.prior = prior
+        self.prior_prime = prior_prime
+        self.gamma = gamma
+        self.beta = beta
+        self.loss_func = loss #lambda x: (torch.tensor(1., device=x.device) - torch.sign(x))/torch.tensor(2, device=x.device)
+        self.nnPU = nnPU
+        self.positive = 1
+        self.unlabeled = -1
+        self.min_count = torch.tensor(1.)
+
+    def onnpu_loss(self, inp, target, prior=None, prior_prime=None):
+    # assert(inp.shape == target.shape)
+        N = len(target)
+        if prior is None:
+            prior=self.prior
+        if prior_prime is None:
+            prior_prime=self.prior_prime
+        target = target*2 - 1 # else : target -1 == self.unlabeled in next row #!!!! -1 instead of 0!!
+
+        positive, unlabeled = target == self.positive, target == self.unlabeled
+        positive, unlabeled = positive.type(torch.float), unlabeled.type(torch.float)
+        # if inp.is_cuda:
+        #     self.min_count = self.min_count.cuda()
+        #     prior = torch.tensor(prior).cuda()
+        n_positive, n_unlabeled = torch.max(self.min_count, torch.sum(positive)), torch.max(self.min_count, torch.sum(unlabeled))
+        
+        y_positive = self.loss_func(positive*inp) * positive
+        y_positive_inv = self.loss_func(-positive*inp) * positive
+        y_unlabeled = self.loss_func(-unlabeled*inp) * unlabeled
+
+        positive_risk = prior_prime/n_positive * torch.sum(y_positive)
+        negative_risk =  (1-prior_prime)/(n_unlabeled*(1-prior)) * torch.sum(y_unlabeled) - ((1-prior_prime)*prior/(n_positive*(1-prior))) *torch.sum(y_positive_inv)
+
+        if negative_risk < -self.beta and self.nnPU:
+            return (-self.gamma * negative_risk) / N
+        else:
+            return (positive_risk + negative_risk) / N
+
+    # def init_weights(self, init_linear='normal'):
+    #     self.predictor.init_weights(init_linear=init_linear)
+
+    def forward(self, z_i, z_j):
+        """Forward head.
+        Args:
+            input (Tensor): NxC input features.
+            target (Tensor): NxC target features.
+        Returns:
+            dict[str, Tensor]: A dictionary of loss components.
+        """
+        batch_size = z_i.size(0)
+        pred = self.predictor(torch.cat((z_i, z_j)))
+        # pred_norm = nn.functional.normalize(pred, dim=1)
+        # target_norm = nn.functional.normalize(target, dim=1)
+        n = pred.size(0)
+        # dist = (-1. * torch.matmul(pred_norm, target_norm.t()) +1)/2 #-2.*
+        # idx = torch.arange(n)
+        # mask = idx.expand(n, n).eq(idx.expand(n, n).t())
+
+        targets = -1 * torch.ones((n, n), dtype=bool)
+        targets = targets.fill_diagonal_(1)
+        for i in range(batch_size): # * world_size
+            targets[i, batch_size + i] = 1 # * world_size 
+            targets[batch_size + i, i] = 1 # * world_size
+
+        losses = []
+        for i in range(n):
+            loss_n = self.onnpu_loss(pred, targets)
+            losses.append(loss_n.unsqueeze(dim=0))
+        loss = torch.cat(losses).mean()
+
+        return loss # dict(loss=loss_triplet)
