@@ -230,6 +230,7 @@ class HeadNNPU(nn.Module):
         for i in range(batch_size): # * world_size
             targets[i, batch_size + i] = 1 # * world_size 
             targets[batch_size + i, i] = 1 # * world_size
+        targets = targets.to(pred.device)
 
         losses = []
         for i in range(n):
