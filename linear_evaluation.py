@@ -110,12 +110,19 @@ def test(args, loader, simclr_model, model, criterion, optimizer):
 
 
 if __name__ == "__main__":
+
     parser = argparse.ArgumentParser(description="SimCLR")
-    config = yaml_config_hook("./config/config.yaml")
+
+    parser.add_argument("-c", "--config", type=str, required=True)
+    args = parser.parse_args()
+
+    # config = yaml_config_hook("./config/config_tripnnpu.yaml")
+    config = yaml_config_hook(f"./config/{args.config}.yaml")
     for k, v in config.items():
         parser.add_argument(f"--{k}", default=v, type=type(v))
 
     args = parser.parse_args()
+
     args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     if args.dataset == "STL10":
@@ -128,6 +135,19 @@ if __name__ == "__main__":
         test_dataset = torchvision.datasets.STL10(
             args.dataset_dir,
             split="test",
+            download=True,
+            transform=TransformsSimCLR(size=args.image_size).test_transform,
+        )
+    elif args.dataset == "CIFAR100":
+        train_dataset = torchvision.datasets.CIFAR100(
+            args.dataset_dir,
+            train=True,
+            download=True,
+            transform=TransformsSimCLR(size=args.image_size).test_transform,
+        )
+        test_dataset = torchvision.datasets.CIFAR100(
+            args.dataset_dir,
+            train=False,
             download=True,
             transform=TransformsSimCLR(size=args.image_size).test_transform,
         )
@@ -144,11 +164,37 @@ if __name__ == "__main__":
             download=True,
             transform=TransformsSimCLR(size=args.image_size).test_transform,
         )
+
+        if args.data_pretrain == "imbalanced" or args.data_classif == "PU":
+            idxs = []
+            idxtargets_up = []
+            for cls in range(10):
+                idxs_cls = [i for i in range(len(train_dataset.targets)) if train_dataset.targets[i]==cls]
+                if cls in [0, 1, 8, 9]:
+                    if args.data_pretrain == "imbalanced":
+                        idxs_cls = idxs_cls[:750]
+                    if args.data_classif == "PU":  
+                        idxtargets_up_cls = idxs_cls[:int((1-args.PU_ratio)*len(idxs_cls))] # change here 0.2 for any other prop of labeled positive / all positives
+                idxs.extend(idxs_cls)
+                idxs.sort()
+                if args.data_classif == "PU":  
+                    idxtargets_up.extend(idxtargets_up_cls)
+                    idxtargets_up.sort()
+            idxtargets_up = torch.tensor(idxtargets_up)
+
+            train_dataset.targets = torch.tensor(train_dataset.targets)
+            if args.data_classif == "PU":  
+                train_dataset.targets[idxtargets_up] = 0
+            train_datasubset_pu = torch.utils.data.Subset(train_dataset, idxs) 
+    
     else:
         raise NotImplementedError
 
+    if args.data_pretrain == "all":
+            train_datasubset_pu = train_dataset
+
     train_loader = torch.utils.data.DataLoader(
-        train_dataset,
+        train_datasubset_pu, #train_dataset,
         batch_size=args.logistic_batch_size,
         shuffle=True,
         drop_last=True,
@@ -174,7 +220,15 @@ if __name__ == "__main__":
     simclr_model.eval()
 
     ## Logistic Regression
-    n_classes = 10  # CIFAR-10 / STL-10
+    if args.dataset in ["CIFAR10", "STL10"]:
+        n_classes = 10  # CIFAR-10 / STL-10
+    elif args.dataset == "CIFAR100":
+        n_classes = 100
+    
+    if args.data_classif in ["PU", "binary"]:
+        n_classes = 2
+
+    
     model = LogisticRegression(simclr_model.n_features, n_classes)
     model = model.to(args.device)
 
