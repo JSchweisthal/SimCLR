@@ -151,6 +151,19 @@ if __name__ == "__main__":
             download=True,
             transform=TransformsSimCLR(size=args.image_size).test_transform,
         )
+        if args.data_pretrain == "imbalanced":
+            idxs = []
+            idxtargets_up = []
+            for cls in range(100):
+                idxs_cls = [i for i in range(len(train_dataset.targets)) if train_dataset.targets[i]==cls]
+                if cls not in [23]: # cloud, keep this size and shrink all other classes to 20 %
+                    if args.data_pretrain == "imbalanced":
+                        idxs_cls = idxs_cls[:int(len(idxs_cls) * 0.2)]
+                idxs.extend(idxs_cls)
+                idxs.sort()
+            idxtargets_up = torch.tensor(idxtargets_up)
+            train_dataset.targets = torch.tensor(train_dataset.targets)
+            train_datasubset_pu = torch.utils.data.Subset(train_dataset, idxs)
     elif args.dataset == "CIFAR10":
         train_dataset = torchvision.datasets.CIFAR10(
             args.dataset_dir,
