@@ -240,6 +240,7 @@ if __name__ == "__main__":
     
     if args.data_classif in ["PU", "binary"]:
         n_classes = 2
+    else: pass
 
     
     model = LogisticRegression(simclr_model.n_features, n_classes)
