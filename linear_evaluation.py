@@ -238,9 +238,10 @@ if __name__ == "__main__":
     elif args.dataset == "CIFAR100":
         n_classes = 100
     
-    if args.data_classif in ["PU", "binary"]:
-        n_classes = 2
-    else: pass
+    try:
+        if args.data_classif in ["PU", "binary"]:
+            n_classes = 2
+    except: pass
 
     
     model = LogisticRegression(simclr_model.n_features, n_classes)
