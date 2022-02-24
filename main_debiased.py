@@ -10,6 +10,8 @@ import torch.multiprocessing as mp
 from torch.nn.parallel import DataParallel
 from torch.nn.parallel import DistributedDataParallel as DDP
 
+import torch.nn.functional as F
+
 # TensorBoard
 from torch.utils.tensorboard import SummaryWriter
 
@@ -46,6 +48,7 @@ def train(args, train_loader, model, criterion, optimizer, writer):
         # feature_1, out_1 = net(pos_1)
         # feature_2, out_2 = net(pos_2)
         _, _, out_1, out_2 = model(x_i, x_j)
+        out_1, out_2 = F.normalize(out_1, dim=-1), F.normalize(out_2, dim=-1)
         # neg score
         out = torch.cat([out_1, out_2], dim=0)
         neg = torch.exp(torch.mm(out, out.t().contiguous()) / args.temperature)
