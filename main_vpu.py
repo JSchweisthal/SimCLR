@@ -116,7 +116,9 @@ def train(args, train_loader, model, criterion, optimizer, writer):
 
         # calculate gradients and update the network
         # phi_loss = var_loss + config.lam * reg_mix_log
-        loss = var_loss
+
+        ' COSINE SIM TO 0, 1!!'
+        loss = var_loss.mean()
 
 ### new end
         # loss = criterion(z_i, z_j)
