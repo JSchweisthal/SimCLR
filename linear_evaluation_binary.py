@@ -99,7 +99,7 @@ def train(args, loader, model, criterion, optimizer):
     return loss_epoch, accuracy_epoch, f1_epoch
 
 
-def test(args, loader, model, criterion):
+def test(args, loader, model, criterion, optimizer):
     loss_epoch = 0
     accuracy_epoch = 0
     f1_epoch = 0
@@ -325,7 +325,7 @@ if __name__ == "__main__":
 
     for epoch in range(args.logistic_epochs):
         loss_epoch, accuracy_epoch, f1_epoch = train(
-            args, arr_train_loader, simclr_model, model, criterion, optimizer
+            args, arr_train_loader, model, criterion, optimizer
         )
         print(
             f"Epoch [{epoch}/{args.logistic_epochs}]\t Loss: {loss_epoch / len(arr_train_loader)}\t Accuracy: {accuracy_epoch / len(arr_train_loader)}\
@@ -334,7 +334,7 @@ if __name__ == "__main__":
 
     # final testing
     loss_epoch, accuracy_epoch, f1_epoch  = test(
-        args, arr_test_loader, simclr_model, model, criterion, optimizer
+        args, arr_test_loader, model, criterion, optimizer
     )
     print(
         f"[FINAL]\t Loss: {loss_epoch / len(arr_test_loader)}\t Accuracy: {accuracy_epoch / len(arr_test_loader)}\
