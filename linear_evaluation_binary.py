@@ -76,7 +76,7 @@ def train(args, loader, model, criterion, optimizer):
         x = x.to(args.device)
         y = y.to(args.device).float()
        
-        output = model(x)
+        output = torch.flatten(model(x))
         loss = criterion(output, y)
 
         predicted = ((torch.sign(output)+1)/2).int()
@@ -108,7 +108,7 @@ def test(args, loader, model, criterion, optimizer):
         x = x.to(args.device)
         y = y.to(args.device).float()
 
-        output = model(x)
+        output = torch.flatten(model(x))
         loss = criterion(output, y)
 
         predicted = ((torch.sign(output)+1)/2).int()
