@@ -50,14 +50,14 @@ logistic_epochs: 100 #500
 data_pretrain: "imbalanced" #options: "all", "imbalanced"
 data_classif: "PU" #options: "binary", "PU"
 # # PU ratio (labeled positives / all positives for binary PU setting)
-# PU_ratio: 0.2
+PU_ratio: 0.2
 
 ############################################
 # select pretrain-loss function specified in simclr/modules/new_loss.py
 
 loss_pretrain: "NT_Xent" # not important for debiased main_debiased
 # loss params
-# prior: 0.1
+prior: 0.1
 # C: -1.
 
 ### debiased
