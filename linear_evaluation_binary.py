@@ -66,7 +66,6 @@ def train(args, loader, model, criterion, optimizer):
     loss_epoch = 0
     accuracy_epoch = 0
     f1_epoch = 0
-    class_pos = torch.tensor(class_pos)
     for step, (x, y) in enumerate(loader):
         optimizer.zero_grad()
 
@@ -103,7 +102,6 @@ def test(args, loader, model, criterion, optimizer):
     loss_epoch = 0
     accuracy_epoch = 0
     f1_epoch = 0
-    class_pos = torch.tensor(class_pos)
     model.eval()
     for step, (x, y) in enumerate(loader):
         model.zero_grad()
