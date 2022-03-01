@@ -69,11 +69,10 @@ def train(args, loader, model, criterion, optimizer):
     for step, (x, y) in enumerate(loader):
         optimizer.zero_grad()
 
-        perm = torch.randperm(len(y))
-        x = x[perm]
-        y = y[perm]
-        #
-
+        # perm = torch.randperm(len(y))
+        # x = x[perm]
+        # y = y[perm]
+        # #
         x = x.to(args.device)
         y = y.to(args.device).float()
        
@@ -259,7 +258,9 @@ if __name__ == "__main__":
                 train_dataset.targets = torch.where(torch.isin(train_dataset.targets, torch.tensor([0, 1, 8, 9])), 1, 0)  
                 train_dataset.targets[idxtargets_up] = 0
             train_datasubset_pu = torch.utils.data.Subset(train_dataset, idxs) 
-    
+        
+        if args.data_classif == "PU":
+            test_dataset.targets = torch.where(torch.isin(test_dataset.targets.targets, torch.tensor([0, 1, 8, 9])), 1, 0)  
     else:
         raise NotImplementedError
 
@@ -326,8 +327,7 @@ if __name__ == "__main__":
             args, arr_train_loader, model, criterion, optimizer
         )
         print(
-            f"Epoch [{epoch}/{args.logistic_epochs}]\t Loss: {loss_epoch / len(arr_train_loader)}\t Accuracy: {accuracy_epoch / len(arr_train_loader)}\
-                \t Accuracy: {f1_epoch / len(arr_train_loader)}"
+            f"Epoch [{epoch}/{args.logistic_epochs}]\t Loss: {loss_epoch / len(arr_train_loader)}\t Accuracy: {accuracy_epoch / len(arr_train_loader)} \t F1: {f1_epoch / len(arr_train_loader)}"
         )
 
     # final testing
@@ -335,6 +335,5 @@ if __name__ == "__main__":
         args, arr_test_loader, model, criterion, optimizer
     )
     print(
-        f"[FINAL]\t Loss: {loss_epoch / len(arr_test_loader)}\t Accuracy: {accuracy_epoch / len(arr_test_loader)}\
-                \t Accuracy: {f1_epoch / len(arr_test_loader)}"
+        f"[FINAL]\t Loss: {loss_epoch / len(arr_test_loader)}\t Accuracy: {accuracy_epoch / len(arr_test_loader)} \t F1: {f1_epoch / len(arr_test_loader)}"
     )
