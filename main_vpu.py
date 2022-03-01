@@ -94,9 +94,9 @@ def train(args, train_loader, model, criterion, optimizer, writer):
         log_phi_x = neg
         log_phi_p = pos
         # output_phi_x = output_phi_all[idx_x]
-        var_loss = torch.logsumexp(log_phi_x, dim=0) - np.log(len(log_phi_x)) - 1 * torch.mean(log_phi_p)
+        var_loss = torch.logsumexp(log_phi_x, dim=0) - np.log((log_phi_x).axis) - 1 * torch.mean(log_phi_p)
 ###Important!!
-        # # perform Mixup and calculate the regularization
+        # perform Mixup and calculate the regularization
         # target_x = log_phi_x.exp()
         # target_p = torch.ones((log_phi_x.size(0), 2), dtype=torch.float32)
         # target_p = target_p.cuda() if torch.cuda.is_available() else target_p
