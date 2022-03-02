@@ -186,18 +186,18 @@ if __name__ == "__main__":
                 if cls in [0, 1, 8, 9]:
                     if args.data_pretrain == "imbalanced":
                         idxs_cls = idxs_cls[:750]
-                    if args.data_classif == "PU":  
-                        idxtargets_up_cls = idxs_cls[:int((1-args.PU_ratio)*len(idxs_cls))] # change here 0.2 for any other prop of labeled positive / all positives
+                    # if args.data_classif == "PU":  
+                    #     idxtargets_up_cls = idxs_cls[:int((1-args.PU_ratio)*len(idxs_cls))] # change here 0.2 for any other prop of labeled positive / all positives
                 idxs.extend(idxs_cls)
                 idxs.sort()
-                if args.data_classif == "PU":  
-                    idxtargets_up.extend(idxtargets_up_cls)
-                    idxtargets_up.sort()
+                # if args.data_classif == "PU":  
+                #     idxtargets_up.extend(idxtargets_up_cls)
+                #     idxtargets_up.sort()
             idxtargets_up = torch.tensor(idxtargets_up)
 
             train_dataset.targets = torch.tensor(train_dataset.targets)
-            if args.data_classif == "PU":  
-                train_dataset.targets[idxtargets_up] = 0
+            # if args.data_classif == "PU":  
+            #     train_dataset.targets[idxtargets_up] = 0
             train_datasubset_pu = torch.utils.data.Subset(train_dataset, idxs) 
     
     else:
@@ -238,10 +238,10 @@ if __name__ == "__main__":
     elif args.dataset == "CIFAR100":
         n_classes = 100
     
-    try:
-        if args.data_classif in ["PU", "binary"]:
-            n_classes = 2
-    except: pass
+    # try:
+    #     if args.data_classif in ["PU", "binary"]:
+    #         n_classes = 2
+    # except: pass
 
     
     model = LogisticRegression(simclr_model.n_features, n_classes)
