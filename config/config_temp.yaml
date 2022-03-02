@@ -50,7 +50,7 @@ logistic_epochs: 100 #500
 data_pretrain: "imbalanced" #options: "all", "imbalanced"
 data_classif: "PU" #options: "binary", "PU"
 # # PU ratio (labeled positives / all positives for binary PU setting)
-# PU_ratio: 0.2
+PU_ratio: 0.2
 
 ############################################
 # select pretrain-loss function specified in simclr/modules/new_loss.py
