@@ -54,11 +54,11 @@ def train(args, train_loader, model, criterion, optimizer, writer):
         out_1, out_2 = F.normalize(out_1, dim=-1), F.normalize(out_2, dim=-1)
         # neg score
         out = torch.cat([out_1, out_2], dim=0)
-        distance = torch.exp(torch.mm(out, out.t().contiguous()) / args.temperature)
+        exp_sim = torch.exp(torch.mm(out, out.t().contiguous()) / args.temperature)
         mask = get_negative_mask(args.batch_size, y).cuda()
-        neg = distance.masked_select(mask)#.view(2 * args.batch_size, -1)
+        neg = exp_sim.masked_select(mask)#.view(2 * args.batch_size, -1)
 
-        pos = distance.masked_select(~mask)#.view(2 * args.batch_size, -1)
+        pos = exp_sim.masked_select(~mask)#.view(2 * args.batch_size, -1)
         # pos score
         # pos = torch.exp(torch.sum(out_1 * out_2, dim=-1) / args.temperature)
         # pos = torch.cat([pos, pos], dim=0)
