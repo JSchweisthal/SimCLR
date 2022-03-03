@@ -82,7 +82,7 @@ def train(args, train_loader, model, criterion, optimizer, writer):
             Ng = neg.sum()
 
         # contrastive loss
-        loss = (- torch.log(pos.mean() / (pos.mean() + Ng) ))#.mean()
+        loss = (- torch.log(pos.sum() / (pos.sum() + Ng) ))#.mean()
 
         # extension: bring in prior prime just for unncessary fun
 
