@@ -60,3 +60,7 @@ loss_pretrain: "NT_Xent"
 # prior: 0.1
 # C: -1.
 
+### debiased
+debiased: True
+tau_plus: 0.1
+
