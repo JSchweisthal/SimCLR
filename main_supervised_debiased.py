@@ -55,7 +55,7 @@ def train(args, train_loader, model, criterion, optimizer, writer):
         # neg score
         out = torch.cat([out_1, out_2], dim=0)
         dist = torch.exp(torch.mm(out, out.t().contiguous()) / args.temperature)
-        mask = get_negative_mask(args.batch_size).cuda()
+        mask = get_negative_mask(args.batch_size, y).cuda()
         neg = dist.masked_select(mask)#.view(2 * args.batch_size, -1)
 
         pos = dist.masked_select(~mask)#.view(2 * args.batch_size, -1)
