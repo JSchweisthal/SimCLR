@@ -65,7 +65,7 @@ def train(args, train_loader, model, criterion, optimizer, writer):
 
         # estimator g()
         if args.debiased:
-            N = len(neg) - len(pos) # args.batch_size * 2 - len(pos)
+            N = len(neg) # args.batch_size * 2 - len(pos)
             Ng = (-args.tau_plus * N * pos.mean() + neg.sum()) / (1 - args.tau_plus)
             # constrain (optional)
             Ng = torch.clamp(Ng, min = N * np.e**(-1 / args.temperature))
@@ -82,7 +82,7 @@ def train(args, train_loader, model, criterion, optimizer, writer):
             Ng = neg.sum()
 
         # contrastive loss
-        loss = (- torch.log(pos.sum() / (pos.sum() + Ng) ))#.mean()
+        loss = (- torch.log(pos.mean() / (pos.mean() + Ng) ))#.mean()
 
         # extension: bring in prior prime just for unncessary fun
 
