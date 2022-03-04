@@ -24,18 +24,32 @@ from simclr.modules.sync_batchnorm import convert_model
 from model import load_optimizer, save_model
 from utils import yaml_config_hook
 
-
-###new
-def get_negative_mask(batch_size, labels):
+def get_negative_mask(batch_size):
     negative_mask = torch.ones((batch_size, 2 * batch_size), dtype=bool)
     for i in range(batch_size):
-        for j in range(batch_size):
-            if labels[j] == 1:
-                negative_mask[i, j] = 0
-                negative_mask[i, j + batch_size] = 0
+        negative_mask[i, i] = 0
+        negative_mask[i, i + batch_size] = 0
 
     negative_mask = torch.cat((negative_mask, negative_mask), 0)
     return negative_mask
+
+###new
+def get_mask_classes(batch_size, labels):
+    mat = torch.ones((batch_size, 2 * batch_size), dtype=int)
+    for i in range(batch_size):
+        for j in range(batch_size):
+            if (labels[i] == 1) and (labels[j] == 1):
+                mat[i, j] = 1
+                mat[i, j + batch_size] = 1
+            elif (labels[i] == 0) and (labels[j] == 0):
+                mat[i, j] = 0
+                mat[i, j + batch_size] = 0
+            else:
+                mat[i, j] = -1
+                mat[i, j + batch_size] = -1
+
+    mat = torch.cat((mat, mat), 0)
+    return mat
 
 def train(args, train_loader, model, criterion, optimizer, writer):
     loss_epoch = 0
@@ -45,37 +59,56 @@ def train(args, train_loader, model, criterion, optimizer, writer):
         x_j = x_j.cuda(non_blocking=True)
         y = y.cuda(non_blocking=True)
 
-        # positive pair, with encoding
-        # h_i, h_j, z_i, z_j = model(x_i, x_j)
-### new
-        # feature_1, out_1 = net(pos_1)
-        # feature_2, out_2 = net(pos_2)
+
+        # new
         _, _, out_1, out_2 = model(x_i, x_j)
         out_1, out_2 = F.normalize(out_1, dim=-1), F.normalize(out_2, dim=-1)
+
         # neg score
         out = torch.cat([out_1, out_2], dim=0)
         exp_sim = torch.exp(torch.mm(out, out.t().contiguous()) / args.temperature)
-        mask = get_negative_mask(args.batch_size, y).cuda()
-        neg = exp_sim.masked_select(mask)#.view(2 * args.batch_size, -1)
 
-        pos = exp_sim.masked_select(~mask)#.view(2 * args.batch_size, -1)
-        # pos score
-        # pos = torch.exp(torch.sum(out_1 * out_2, dim=-1) / args.temperature)
-        # pos = torch.cat([pos, pos], dim=0)
+        mask_sample = get_negative_mask(args.batch_size).cuda()
+        anchor = exp_sim.masked_select(mask_sample).view(2 * args.batch_size, -1)
+
+        mask_classes = get_mask_classes(args.batch_size, y).cuda()
+
+        labels = torch.cat([y, y], dim = 0)
+
+        n_pos = (labels==1).sum()
+        n_unl = (labels==0).sum()
+
+        sim_unl = exp_sim.masked_select(mask_classes==0).view(n_unl, -1)
+
+        sim_pos = exp_sim.masked_select(mask_classes==1).view(n_pos, -1)
+
+        sim_pos_inv = exp_sim[labels==1].masked_select((mask_classes==-1)[labels==1]).view(n_pos, -1)
+
+
+
+        # anchor_pos = torch.where(mask_classes==-1, exp_sim, 0)[torch.cat([y, y])==1].sum(dim=1)
+        # anchor_unl = torch.where(mask_classes==-1, exp_sim, 0)[torch.cat([y, y])==0].sum(dim=1)
+        anchor_pos = anchor[labels==1].sum(dim=1).unsqueeze(1)
+        anchor_unl = anchor[labels==0].sum(dim=1).unsqueeze(1)
+
+
+        sample_loss_pos = -torch.mean(torch.log(sim_pos/anchor_pos), dim=1)
+        sample_loss_unl = -torch.mean(torch.log(sim_unl/anchor_unl), dim=1)
+        sample_loss_pos_inv = -torch.mean(torch.log(sim_pos_inv/anchor_pos), dim=1)
 
 
      # own implemtation:
-
+## check distance masking !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
      ## 1. replace last torch.log posmean by simlarity positive to negative
      ## 2. use full nt xent loss (cross entropy) instead of the just the similarity
         prior_prime = 0.5
         prior = args.tau_plus
 
-        loss_pos = prior_prime * (- torch.log(pos.mean()))
-        loss_neg = (1-prior_prime)/(1-prior) * (-torch.log(neg.mean())) - ((1-prior_prime) * prior)/(1-prior) * torch.log(pos.mean())
+        loss_pos = prior_prime * torch.mean(sample_loss_pos)
+        loss_neg = (1-prior_prime)/(1-prior) * torch.mean(sample_loss_unl) - ((1-prior_prime) * prior)/(1-prior) * torch.mean(sample_loss_pos_inv)
         # torch.clamp(loss_neg, min = N * np.e**(-1 / args.temperature))
 
-        loss = loss_pos + torch.clamp(loss_neg, min = 0)
+        loss = prior_prime * loss_pos + torch.clamp(loss_neg, min = 0)
 
 
 
