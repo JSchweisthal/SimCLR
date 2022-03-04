@@ -330,19 +330,19 @@ if __name__ == "__main__":
             args, arr_train_loader, model, criterion, optimizer
         )
         print(
-            f"Epoch [{epoch}/{args.logistic_epochs}]\t Loss: {loss_epoch / len(arr_train_loader)}\t Accuracy: {accuracy_epoch / len(arr_train_loader)} \t F1: {f1_epoch / len(arr_train_loader)}"
+            f"Epoch [{epoch}/{args.logistic_epochs}]\t Loss: {loss_epoch / len(arr_train_loader)}\t Accuracy: {accuracy_epoch / len(arr_train_loader)}\t F1: {f1_epoch / len(arr_train_loader)}"
         )
         # final testing
         loss_epoch, accuracy_epoch, f1_epoch  = test(
             args, arr_test_loader, model, criterion, optimizer
         )
         print(
-            f"[TEST]:\t Loss: {loss_epoch / len(arr_test_loader)}\t Accuracy: {accuracy_epoch / len(arr_test_loader)} \t F1: {f1_epoch / len(arr_test_loader)}"
+            f"[TEST]:\t Loss: {loss_epoch / len(arr_test_loader)}\t Accuracy: {accuracy_epoch / len(arr_test_loader)}\t F1: {f1_epoch / len(arr_test_loader)}"
         )
     # final testing
     loss_epoch, accuracy_epoch, f1_epoch  = test(
         args, arr_test_loader, model, criterion, optimizer
     )
     print(
-        f"[FINAL]\t Loss: {loss_epoch / len(arr_test_loader)}\t Accuracy: {accuracy_epoch / len(arr_test_loader)} \t F1: {f1_epoch / len(arr_test_loader)}"
+        f"[FINAL]\t Loss: {loss_epoch / len(arr_test_loader)}\t Accuracy: {accuracy_epoch / len(arr_test_loader)}\t F1: {f1_epoch / len(arr_test_loader)}"
     )
