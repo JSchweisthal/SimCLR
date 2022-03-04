@@ -54,85 +54,90 @@ def get_mask_classes(batch_size, labels):
 def train(args, train_loader, model, criterion, optimizer, writer):
     loss_epoch = 0
     for step, ((x_i, x_j), y) in enumerate(train_loader):
-        optimizer.zero_grad()
-        x_i = x_i.cuda(non_blocking=True)
-        x_j = x_j.cuda(non_blocking=True)
-        y = y.cuda(non_blocking=True)
 
-
-        # new
-        _, _, out_1, out_2 = model(x_i, x_j)
-        out_1, out_2 = F.normalize(out_1, dim=-1), F.normalize(out_2, dim=-1)
-
-        # neg score
-        out = torch.cat([out_1, out_2], dim=0)
-        exp_sim = torch.exp(torch.mm(out, out.t().contiguous()) / args.temperature)
-
-        mask_sample = get_negative_mask(args.batch_size).cuda()
-        anchor = exp_sim.masked_select(mask_sample).view(2 * args.batch_size, -1)
-
-        mask_classes = get_mask_classes(args.batch_size, y).cuda()
-
-        labels = torch.cat([y, y], dim = 0)
-
-        n_pos = (labels==1).sum()
-        n_unl = (labels==0).sum()
-
-        sim_unl = exp_sim.masked_select(mask_classes==0).view(n_unl, -1)
-
-        sim_pos = exp_sim.masked_select(mask_classes==1).view(n_pos, -1)
-
-        sim_pos_inv = exp_sim[labels==1].masked_select((mask_classes==-1)[labels==1]).view(n_pos, -1)
+        if y.sum() == 0:
+            print('Skip batch: No Positive Samples available')
+        else:
+            optimizer.zero_grad()
+            x_i = x_i.cuda(non_blocking=True)
+            x_j = x_j.cuda(non_blocking=True)
+            y = y.cuda(non_blocking=True)
 
 
 
-        # anchor_pos = torch.where(mask_classes==-1, exp_sim, 0)[torch.cat([y, y])==1].sum(dim=1)
-        # anchor_unl = torch.where(mask_classes==-1, exp_sim, 0)[torch.cat([y, y])==0].sum(dim=1)
-        anchor_pos = anchor[labels==1].sum(dim=1).unsqueeze(1)
-        anchor_unl = anchor[labels==0].sum(dim=1).unsqueeze(1)
+            # new
+            _, _, out_1, out_2 = model(x_i, x_j)
+            out_1, out_2 = F.normalize(out_1, dim=-1), F.normalize(out_2, dim=-1)
+
+            # neg score
+            out = torch.cat([out_1, out_2], dim=0)
+            exp_sim = torch.exp(torch.mm(out, out.t().contiguous()) / args.temperature)
+
+            mask_sample = get_negative_mask(args.batch_size).cuda()
+            anchor = exp_sim.masked_select(mask_sample).view(2 * args.batch_size, -1)
+
+            mask_classes = get_mask_classes(args.batch_size, y).cuda()
+
+            labels = torch.cat([y, y], dim = 0)
+
+            n_pos = (labels==1).sum()
+            n_unl = (labels==0).sum()
+
+            sim_unl = exp_sim.masked_select(mask_classes==0).view(n_unl, -1)
+
+            sim_pos = exp_sim.masked_select(mask_classes==1).view(n_pos, -1)
+
+            sim_pos_inv = exp_sim[labels==1].masked_select((mask_classes==-1)[labels==1]).view(n_pos, -1)
 
 
-        sample_loss_pos = -torch.mean(torch.log(sim_pos/anchor_pos), dim=1)
-        sample_loss_unl = -torch.mean(torch.log(sim_unl/anchor_unl), dim=1)
-        sample_loss_pos_inv = -torch.mean(torch.log(sim_pos_inv/anchor_pos), dim=1)
+
+            # anchor_pos = torch.where(mask_classes==-1, exp_sim, 0)[torch.cat([y, y])==1].sum(dim=1)
+            # anchor_unl = torch.where(mask_classes==-1, exp_sim, 0)[torch.cat([y, y])==0].sum(dim=1)
+            anchor_pos = anchor[labels==1].sum(dim=1).unsqueeze(1)
+            anchor_unl = anchor[labels==0].sum(dim=1).unsqueeze(1)
 
 
-     # own implemtation:
-## check distance masking !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-     ## 1. replace last torch.log posmean by simlarity positive to negative
-     ## 2. use full nt xent loss (cross entropy) instead of the just the similarity
-        prior_prime = 0.5
-        prior = args.tau_plus
-
-        loss_pos = prior_prime * torch.mean(sample_loss_pos)
-        loss_neg = (1-prior_prime)/(1-prior) * torch.mean(sample_loss_unl) - ((1-prior_prime) * prior)/(1-prior) * torch.mean(sample_loss_pos_inv)
-        # torch.clamp(loss_neg, min = N * np.e**(-1 / args.temperature))
-
-        loss = prior_prime * loss_pos + torch.clamp(loss_neg, min = 0)
+            sample_loss_pos = -torch.mean(torch.log(sim_pos/anchor_pos), dim=1)
+            sample_loss_unl = -torch.mean(torch.log(sim_unl/anchor_unl), dim=1)
+            sample_loss_pos_inv = -torch.mean(torch.log(sim_pos_inv/anchor_pos), dim=1)
 
 
+        # own implemtation:
+    ## check distance masking !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        ## 1. replace last torch.log posmean by simlarity positive to negative
+        ## 2. use full nt xent loss (cross entropy) instead of the just the similarity
+            prior_prime = 0.5
+            prior = args.tau_plus
 
-        # extension: bring in prior prime just for unncessary fun
+            loss_pos = prior_prime * torch.mean(sample_loss_pos)
+            loss_neg = (1-prior_prime)/(1-prior) * torch.mean(sample_loss_unl) - ((1-prior_prime) * prior)/(1-prior) * torch.mean(sample_loss_pos_inv)
+            # torch.clamp(loss_neg, min = N * np.e**(-1 / args.temperature))
 
-### new end
-        # loss = criterion(z_i, z_j)
-        loss.backward()
+            loss = prior_prime * loss_pos + torch.clamp(loss_neg, min = 0)
 
-        optimizer.step()
-        
 
-        if dist.is_available() and dist.is_initialized():
-            loss = loss.data.clone()
-            dist.all_reduce(loss.div_(dist.get_world_size()))
 
-        if args.nr == 0 and step % 50 == 0:
-            print(f"Step [{step}/{len(train_loader)}]\t Loss: {loss.item()}")
+            # extension: bring in prior prime just for unncessary fun
 
-        if args.nr == 0:
-            writer.add_scalar("Loss/train_epoch", loss.item(), args.global_step)
-            args.global_step += 1
+    ### new end
+            # loss = criterion(z_i, z_j)
+            loss.backward()
 
-        loss_epoch += loss.item()
+            optimizer.step()
+            
+
+            if dist.is_available() and dist.is_initialized():
+                loss = loss.data.clone()
+                dist.all_reduce(loss.div_(dist.get_world_size()))
+
+            if args.nr == 0 and step % 50 == 0:
+                print(f"Step [{step}/{len(train_loader)}]\t Loss: {loss.item()}")
+
+            if args.nr == 0:
+                writer.add_scalar("Loss/train_epoch", loss.item(), args.global_step)
+                args.global_step += 1
+
+            loss_epoch += loss.item()
     return loss_epoch
 
 
