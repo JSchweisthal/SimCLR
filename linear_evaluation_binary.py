@@ -312,7 +312,9 @@ if __name__ == "__main__":
     optimizer = torch.optim.Adam(model.parameters(), lr=3e-4)
     # criterion = torch.nn.CrossEntropyLoss()
 
-    criterion = OversampledPULoss(prior=(0.8*3/33)/(1-0.2*3/33), prior_prime=0.5, nnPU=True) 
+    prior = ((1-args.PU_ratio)*3/33)/(1-args.PU_ratio*3/33) if args.data_pretrain == "imbalanced" else ((1-args.PU_ratio)*2/5)/(1-args.PU_ratio*2/5)
+
+    criterion = OversampledPULoss(prior=prior, prior_prime=0.5, nnPU=True) 
 
     print("### Creating features from pre-trained context model ###")
     (train_X, train_y, test_X, test_y) = get_features(
