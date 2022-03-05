@@ -76,8 +76,10 @@ def train(args, train_loader, model, criterion, optimizer, writer):
 
             labels = torch.cat([y, y], dim = 0)
 
-            loss_sample = -torch.log(exp_sim.masked_select(mask_sample).view(2 * args.batch_size, -1) / anchor)
-            loss_sample = torch.where(mask_classes==labels.unsqueeze(1), loss_sample, 0).sum(dim=1) / torch.where(mask_classes==labels.unsqueeze(1), 1, 0).sum(dim=1)
+            loss_sample = -torch.log(exp_sim / anchor)
+            
+            loss_sample = torch.div(torch.where(mask_classes==labels.unsqueeze(1), loss_sample, torch.tensor(0.).cuda()).sum(dim=1),
+             torch.where(mask_classes==labels.unsqueeze(1), torch.tensor(1.).cuda(), torch.tensor(0.).cuda()).sum(dim=1))
 
 
             loss = loss_sample.mean()
