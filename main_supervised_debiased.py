@@ -47,6 +47,7 @@ def get_mask_classes(batch_size, labels):
             else:
                 mat[i, j] = -1
                 mat[i, j + batch_size] = -1
+        mat[i, i] = 99
 
     mat = torch.cat((mat, mat), 0)
     return mat
@@ -74,7 +75,7 @@ def train(args, train_loader, model, criterion, optimizer, writer):
             exp_sim = torch.exp(torch.mm(out, out.t().contiguous()) / args.temperature)
 
             mask_sample = get_negative_mask(args.batch_size).cuda()
-            anchor = exp_sim.masked_select(mask_sample).view(2 * args.batch_size, -1)
+            # anchor = exp_sim.masked_select(mask_sample).view(2 * args.batch_size, -1)
 
             mask_classes = get_mask_classes(args.batch_size, y).cuda()
 
@@ -90,11 +91,14 @@ def train(args, train_loader, model, criterion, optimizer, writer):
             sim_pos_inv = exp_sim[labels==1].masked_select((mask_classes==-1)[labels==1]).view(n_pos, -1)
 
 
+            # anchor_pos = torch.where(mask_classes==-1, exp_sim, 0)[labels==1].sum(dim=1).unsqueeze(1)
+            # anchor_unl = torch.where(mask_classes==-1, exp_sim, 0)[labels==0].sum(dim=1).unsqueeze(1)
 
-            # anchor_pos = torch.where(mask_classes==-1, exp_sim, 0)[torch.cat([y, y])==1].sum(dim=1)
-            # anchor_unl = torch.where(mask_classes==-1, exp_sim, 0)[torch.cat([y, y])==0].sum(dim=1)
-            anchor_pos = anchor[labels==1].sum(dim=1).unsqueeze(1)
-            anchor_unl = anchor[labels==0].sum(dim=1).unsqueeze(1)
+            anchor_pos = exp_sim[labels==1].masked_select((mask_classes==-1)[labels==1]).view(n_pos, -1).sum(dim=1).unsqueeze(1)
+            anchor_unl = exp_sim[labels==0].masked_select((mask_classes==-1)[labels==0]).view(n_unl, -1).sum(dim=1).unsqueeze(1)
+
+            # anchor_pos = anchor[labels==1].sum(dim=1).unsqueeze(1)
+            # anchor_unl = anchor[labels==0].sum(dim=1).unsqueeze(1)
 
 
             sample_loss_pos = -torch.mean(torch.log(sim_pos/anchor_pos), dim=1)
@@ -108,12 +112,19 @@ def train(args, train_loader, model, criterion, optimizer, writer):
         ## 2. use full nt xent loss (cross entropy) instead of the just the similarity
             prior_prime = 0.5
             prior = args.tau_plus
+            nnPU = False
+
 
             loss_pos = prior_prime * torch.mean(sample_loss_pos)
             loss_neg = (1-prior_prime)/(1-prior) * torch.mean(sample_loss_unl) - ((1-prior_prime) * prior)/(1-prior) * torch.mean(sample_loss_pos_inv)
             # torch.clamp(loss_neg, min = N * np.e**(-1 / args.temperature))
 
-            loss = prior_prime * loss_pos + torch.clamp(loss_neg, min = 0)
+            if nnPU:
+                loss = prior_prime * loss_pos + torch.clamp(loss_neg, min = 0)
+            else:
+                loss = prior_prime * loss_pos + loss_neg
+                if loss_neg <= 0:
+                    print(f"--\n WARNING: Possible Overfitting, negative loss: {loss}\n")
 
 
 

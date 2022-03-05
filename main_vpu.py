@@ -75,13 +75,16 @@ def train(args, train_loader, model, criterion, optimizer, writer):
         _, _, out_1, out_2 = model(x_i, x_j)
         out_1, out_2 = F.normalize(out_1, dim=-1), F.normalize(out_2, dim=-1)
         out = torch.cat([out_1, out_2], dim=0)
-        neg = torch.log(torch.mm(out, out.t().contiguous()) / args.temperature)
+        neg = torch.mm(out, out.t().contiguous()) # / args.temperature
         mask = get_negative_mask(args.batch_size).cuda()
         neg = neg.masked_select(mask).view(2 * args.batch_size, -1)
 
         # pos score
-        pos = torch.log(torch.sum(out_1 * out_2, dim=-1) / args.temperature)
+        pos = torch.sum(out_1 * out_2, dim=-1) # / args.temperature
         pos = torch.cat([pos, pos], dim=0)
+
+        neg = torch.log((neg+1)/2) / args.temperature
+        pos = torch.log((pos+1)/2) / args.temperature
         ##
 
         # data_all = torch.cat((data_p, data_x))
@@ -94,7 +97,7 @@ def train(args, train_loader, model, criterion, optimizer, writer):
         log_phi_x = neg
         log_phi_p = pos
         # output_phi_x = output_phi_all[idx_x]
-        var_loss = torch.logsumexp(log_phi_x, dim=0) - np.log((log_phi_x).axis) - 1 * torch.mean(log_phi_p)
+        var_loss = torch.logsumexp(log_phi_x, dim=1) - torch.log((log_phi_x).shape(1)) - 1 * torch.mean(log_phi_p, dim=1)
 ###Important!!
         # perform Mixup and calculate the regularization
         # target_x = log_phi_x.exp()
