@@ -124,7 +124,7 @@ def train(args, train_loader, model, criterion, optimizer, writer):
             else:
                 loss = prior_prime * loss_pos + loss_neg
                 if loss_neg <= 0:
-                    print(f"--\n WARNING: Possible Overfitting, negative loss: {loss}\n")
+                    print(f"--\n WARNING Step {step}: Possible Overfitting, negative loss: {loss_neg}\n")
 
 
 
