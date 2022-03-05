@@ -100,28 +100,28 @@ def train(args, train_loader, model, criterion, optimizer, writer):
         var_loss = torch.logsumexp(log_phi_x, dim=1) - torch.log((log_phi_x).shape(1)) - 1 * torch.mean(log_phi_p, dim=1)
 ###Important!!
         # perform Mixup and calculate the regularization
-        # target_x = log_phi_x.exp()
-        # target_p = torch.ones((log_phi_x.size(0), 2), dtype=torch.float32)
-        # target_p = target_p.cuda() if torch.cuda.is_available() else target_p
-        # rand_perm = torch.randperm(2)
+        target_x = log_phi_x.exp()
+        target_p = torch.ones((log_phi_x.size(0), 2), dtype=torch.float32)
+        target_p = target_p.cuda() if torch.cuda.is_available() else target_p
+        rand_perm = torch.randperm(2)
 
-        # data_p_perm, target_p_perm = torch.stack([torch.cat((x_i, x_i)), torch.cat((x_j, x_j))])[:, rand_perm], target_p[:, rand_perm]
-        # m = torch.distributions.beta.Beta(config.mix_alpha, config.mix_alpha)
-        # lam = m.sample(n=(log_phi_x.size(0),))
-        # data_x = torch.cat((x_i, x_j)).expand(2*args.batch_size, -1, -1)[get_negative_mask(args.batch_size)].reshape(2*args.batch_size, 2*args.batch_size -2, -1)
-        # data = lam * data_x + (1 - lam) * data_p_perm
-        # target = lam * target_x + (1 - lam) * target_p_perm
-        # if torch.cuda.is_available():
-        #     data = data.cuda()
-        #     target = target.cuda()
-        # out_log_phi_all = model_phi(data)
-        # reg_mix_log = ((torch.log(target) - out_log_phi_all[:, 1]) ** 2).mean()
+        data_p_perm, target_p_perm = torch.stack([torch.cat((x_i, x_i)), torch.cat((x_j, x_j))])[:, rand_perm], target_p[:, rand_perm]
+        m = torch.distributions.beta.Beta(config.mix_alpha, config.mix_alpha)
+        lam = m.sample(n=(log_phi_x.size(0),))
+        data_x = torch.cat((x_i, x_j)).expand(2*args.batch_size, -1, -1)[get_negative_mask(args.batch_size)].reshape(2*args.batch_size, 2*args.batch_size -2, -1)
+        data = lam * data_x + (1 - lam) * data_p_perm
+        target = lam * target_x + (1 - lam) * target_p_perm
+        if torch.cuda.is_available():
+            data = data.cuda()
+            target = target.cuda()
+        out_log_phi_all = model_phi(data)
+        reg_mix_log = ((torch.log(target) - out_log_phi_all[:, 1]) ** 2).mean()
 
         # calculate gradients and update the network
-        # phi_loss = var_loss + config.lam * reg_mix_log
+        phi_loss = var_loss + config.lam * reg_mix_log
 
-        ' COSINE SIM TO 0, 1!!'
-        loss = var_loss.mean()
+        #' COSINE SIM TO 0, 1!!' # done
+        loss = phi_loss.mean()
 
 ### new end
         # loss = criterion(z_i, z_j)

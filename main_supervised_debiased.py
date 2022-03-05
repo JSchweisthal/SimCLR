@@ -28,7 +28,7 @@ def get_negative_mask(batch_size):
     negative_mask = torch.ones((batch_size, 2 * batch_size), dtype=bool)
     for i in range(batch_size):
         negative_mask[i, i] = 0
-        negative_mask[i, i + batch_size] = 0
+        #negative_mask[i, i + batch_size] = 0
 
     negative_mask = torch.cat((negative_mask, negative_mask), 0)
     return negative_mask
@@ -75,7 +75,7 @@ def train(args, train_loader, model, criterion, optimizer, writer):
             exp_sim = torch.exp(torch.mm(out, out.t().contiguous()) / args.temperature)
 
             mask_sample = get_negative_mask(args.batch_size).cuda()
-            # anchor = exp_sim.masked_select(mask_sample).view(2 * args.batch_size, -1)
+            anchor = exp_sim.masked_select(mask_sample).view(2 * args.batch_size, -1)
 
             mask_classes = get_mask_classes(args.batch_size, y).cuda()
 
@@ -94,11 +94,11 @@ def train(args, train_loader, model, criterion, optimizer, writer):
             # anchor_pos = torch.where(mask_classes==-1, exp_sim, 0)[labels==1].sum(dim=1).unsqueeze(1)
             # anchor_unl = torch.where(mask_classes==-1, exp_sim, 0)[labels==0].sum(dim=1).unsqueeze(1)
 
-            anchor_pos = exp_sim[labels==1].masked_select((mask_classes==-1)[labels==1]).view(n_pos, -1).sum(dim=1).unsqueeze(1)
-            anchor_unl = exp_sim[labels==0].masked_select((mask_classes==-1)[labels==0]).view(n_unl, -1).sum(dim=1).unsqueeze(1)
+            # anchor_pos = exp_sim[labels==1].masked_select((mask_classes==-1)[labels==1]).view(n_pos, -1).sum(dim=1).unsqueeze(1)
+            # anchor_unl = exp_sim[labels==0].masked_select((mask_classes==-1)[labels==0]).view(n_unl, -1).sum(dim=1).unsqueeze(1)
 
-            # anchor_pos = anchor[labels==1].sum(dim=1).unsqueeze(1)
-            # anchor_unl = anchor[labels==0].sum(dim=1).unsqueeze(1)
+            anchor_pos = anchor[labels==1].sum(dim=1).unsqueeze(1)
+            anchor_unl = anchor[labels==0].sum(dim=1).unsqueeze(1)
 
 
             sample_loss_pos = -torch.mean(torch.log(sim_pos/anchor_pos), dim=1)
