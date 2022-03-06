@@ -108,7 +108,7 @@ def train(args, train_loader, model, criterion, optimizer, writer):
             Ng_pos = (-args.tau_plus * n_unl * sim_pos.mean(dim=1) + sim_pos_inv.sum(dim=1)) / (1 - args.tau_plus)
 
             if any(Ng_pos <= (n_unl * np.e**(-1 / args.temperature))):
-                 print(f"--\n WARNING Step {step}: Too low negative loss in PU: {Ng_pos.mean()}\n")
+                print(f"--\n WARNING Step {step}: Too low negative loss in PU: {Ng_pos.mean()}\n")
 
             # constrain (optional)
             Ng_pos = torch.clamp(Ng_pos, min = n_unl * np.e**(-1 / args.temperature))
@@ -121,8 +121,6 @@ def train(args, train_loader, model, criterion, optimizer, writer):
             loss = loss_pos + loss_neg
 
 
-
-            print(f"--\n WARNING Step {step}: Possible Overfitting, negative loss: {loss_neg}\n")
 
 
 
