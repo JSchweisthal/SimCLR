@@ -118,7 +118,7 @@ def train(args, train_loader, model, criterion, optimizer, writer):
 
             # unlabeled class augmentations
             Ng_unl_pos = (-args.tau_plus * n_unl * sim_unl_inv.mean(dim=1) + sim_unl.sum(dim=1)) / (1 - args.tau_plus)
-            Ng_unl_neg = (-(1-args.tau_plus)*(n_unl/len(labels)) * n_unl * aug_unl + sim_unl_inv.sum(dim=1)) / (1 - args.tau_plus)
+            Ng_unl_neg = (-(1-args.tau_plus)*(n_unl/len(labels)) * n_unl * aug_unl + sim_unl_inv.sum(dim=1)) / (1- ((1-args.tau_plus)*(n_unl/len(labels))))
 
             Ng_unl_pos = torch.clamp(Ng_unl_pos, min = 0)
             Ng_unl_neg = torch.clamp(Ng_unl_neg, min = 0)
