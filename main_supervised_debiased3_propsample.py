@@ -54,9 +54,20 @@ def get_mask_classes(batch_size, labels):
 
 def train(args, train_loader, model, criterion, optimizer, writer):
     loss_epoch = 0
-    for step, (((x_i_pos, x_j_pos), y_pos), ((x_i_unl, x_j_unl), y_unl)) in enumerate(train_loader):
 
-        randperm = torch.randperm(len(y_pos)*2)
+    train_loader_pos = iter(train_loader[0])
+
+    for step, ((x_i_unl, x_j_unl), y_unl) in enumerate(train_loader[1]):
+
+        try:
+            ((x_i_pos, x_j_pos), y_pos) = next(train_loader_pos)
+        except StopIteration:
+            train_loader_pos = iter(train_loader[0])
+            ((x_i_pos, x_j_pos), y_pos) = next(train_loader_pos)
+
+    # for step, (((x_i_pos, x_j_pos), y_pos), ((x_i_unl, x_j_unl), y_unl)) in enumerate(train_loader):
+
+        randperm = torch.randperm(len(y_pos)+len(y_unl))
         x_i = torch.cat((x_i_pos, x_i_unl))[randperm]
         x_j = torch.cat((x_j_pos, x_j_unl))[randperm]
         y = torch.cat((y_pos, y_unl))[randperm]
@@ -154,7 +165,7 @@ def train(args, train_loader, model, criterion, optimizer, writer):
                 dist.all_reduce(loss.div_(dist.get_world_size()))
 
             if args.nr == 0 and step % 50 == 0:
-                print(f"Step [{step}/{len(train_loader)}]\t Loss: {loss.item()}")
+                print(f"Step [{step}/{len(train_loader[1])}]\t Loss: {loss.item()}")
 
             if args.nr == 0:
                 writer.add_scalar("Loss/train_epoch", loss.item(), args.global_step)
@@ -256,7 +267,7 @@ def main(gpu, args):
             num_workers=args.workers,
             sampler=None)
 
-        train_loader = zip(train_loader_pos, train_loader_unl)
+        train_loader = (train_loader_pos, train_loader_unl)
 
 
     # if args.data_pretrain == "all":
@@ -335,10 +346,10 @@ def main(gpu, args):
             save_model(args, model, optimizer)
 
         if args.nr == 0:
-            writer.add_scalar("Loss/train", loss_epoch / len(train_loader), epoch)
+            writer.add_scalar("Loss/train", loss_epoch / len(train_loader[1]), epoch)
             writer.add_scalar("Misc/learning_rate", lr, epoch)
             print(
-                f"Epoch [{epoch}/{args.epochs}]\t Loss: {loss_epoch / len(train_loader)}\t lr: {round(lr, 5)}"
+                f"Epoch [{epoch}/{args.epochs}]\t Loss: {loss_epoch / len(train_loader[1])}\t lr: {round(lr, 5)}"
             )
             args.current_epoch += 1
 
