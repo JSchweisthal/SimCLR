@@ -88,7 +88,7 @@ def train(args, train_loader, model, criterion, optimizer, writer):
             n_pos = (labels==1).sum()
             n_unl = (labels==0).sum()
 
-            sim_unl = exp_sim.masked_select(mask_classes==0).view(n_unl, -1)
+            # sim_unl = exp_sim.masked_select(mask_classes==0).view(n_unl, -1)
 
             sim_pos = exp_sim.masked_select(mask_classes==1).view(n_pos, -1)
 
@@ -106,6 +106,10 @@ def train(args, train_loader, model, criterion, optimizer, writer):
 
             # positive class augmentations
             Ng_pos = (-args.tau_plus * n_unl * sim_pos.mean(dim=1) + sim_pos_inv.sum(dim=1)) / (1 - args.tau_plus)
+
+            if Ng_pos <= (n_unl * np.e**(-1 / args.temperature)):
+                 print(f"--\n WARNING Step {step}: Too low negative loss in PU: {loss_neg}\n")
+
             # constrain (optional)
             Ng_pos = torch.clamp(Ng_pos, min = n_unl * np.e**(-1 / args.temperature))
             # contrastive loss
@@ -118,28 +122,7 @@ def train(args, train_loader, model, criterion, optimizer, writer):
 
 
 
-            
-
-
-        # own implemtation:
-    ## check distance masking !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        ## 1. replace last torch.log posmean by simlarity positive to negative
-        ## 2. use full nt xent loss (cross entropy) instead of the just the similarity
-            prior_prime = 0.5
-            prior = args.tau_plus
-            nnPU = False
-
-
-            loss_pos = prior_prime * torch.mean(sample_loss_pos)
-            loss_neg = (1-prior_prime)/(1-prior) * torch.mean(sample_loss_unl) - ((1-prior_prime) * prior)/(1-prior) * torch.mean(sample_loss_pos_inv)
-            # torch.clamp(loss_neg, min = N * np.e**(-1 / args.temperature))
-
-            if nnPU:
-                loss = prior_prime * loss_pos + torch.clamp(loss_neg, min = 0)
-            else:
-                loss = prior_prime * loss_pos + loss_neg
-                if loss_neg <= 0:
-                    print(f"--\n WARNING Step {step}: Possible Overfitting, negative loss: {loss_neg}\n")
+            print(f"--\n WARNING Step {step}: Possible Overfitting, negative loss: {loss_neg}\n")
 
 
 
