@@ -118,7 +118,9 @@ def train(args, train_loader, model, criterion, optimizer, writer):
             # unlabeled class augmentations
             loss_neg = (- torch.log(aug_unl / (anchor_unl) )).mean()
 
-            loss = loss_pos + loss_neg
+            prior_prime = 0.5
+
+            loss = prior_prime * loss_pos +  (1-prior_prime) * loss_neg
 
 
 
