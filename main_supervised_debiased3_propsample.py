@@ -246,8 +246,8 @@ def main(gpu, args):
     
 
     if args.data_classif == "PU":
-        idx_pos = [i for i in range(len(train_dataset.targets)) if train_dataset.targets[i]==1 and train_dataset.targets[i] in idxs]
-        idx_unl = [i for i in range(len(train_dataset.targets)) if train_dataset.targets[i]==0 and train_dataset.targets[i] in idxs]
+        idx_pos = [i for i in idxs if (train_dataset.targets[i]==1)]
+        idx_unl = [i for i in idxs if (train_dataset.targets[i]==0)]
 
         train_datasubset_pos = torch.utils.data.Subset(train_dataset, idx_pos)
         train_datasubset_unl = torch.utils.data.Subset(train_dataset, idx_unl)
