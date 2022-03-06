@@ -93,7 +93,7 @@ def train(args, train_loader, model, criterion, optimizer, writer):
             sim_pos = exp_sim.masked_select(mask_classes==1).view(n_pos, -1)
 
             sim_pos_inv = exp_sim[labels==1].masked_select((mask_classes==-1)[labels==1]).view(n_pos, -1)
-            sim_unl_inv = exp_sim[labels==0].masked_select((mask_classes==-1)[labels==0]).view(n_pos, -1)
+            sim_unl_inv = exp_sim[labels==0].masked_select((mask_classes==-1)[labels==0]).view(n_unl, -1)
 
 
             # anchor_pos = torch.where(mask_classes==-1, exp_sim, 0)[labels==1].sum(dim=1).unsqueeze(1)
