@@ -250,7 +250,7 @@ def main(gpu, args):
             sampler=None)
         train_loader_unl = torch.utils.data.DataLoader(
             train_datasubset_unl, #train_dataset,
-            batch_size=int(np.ceil(args.batch_size * len(idx_unl) / (len(idx_pos) + len(idx_unl)))),
+            batch_size=int(np.floor(args.batch_size * len(idx_unl) / (len(idx_pos) + len(idx_unl)))),
             shuffle=True,
             drop_last=True,
             num_workers=args.workers,
