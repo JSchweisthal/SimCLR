@@ -107,7 +107,7 @@ def train(args, train_loader, model, criterion, optimizer, writer):
             # positive class augmentations
             Ng_pos = (-args.tau_plus * n_unl * sim_pos.mean(dim=1) + sim_pos_inv.sum(dim=1)) / (1 - args.tau_plus)
 
-            if Ng_pos <= (n_unl * np.e**(-1 / args.temperature)):
+            if any(Ng_pos <= (n_unl * np.e**(-1 / args.temperature))):
                  print(f"--\n WARNING Step {step}: Too low negative loss in PU: {loss_neg}\n")
 
             # constrain (optional)
