@@ -97,6 +97,8 @@ def train(args, train_loader, model, criterion, optimizer, writer):
         log_phi_x = neg
         log_phi_p = pos
         # output_phi_x = output_phi_all[idx_x]
+
+        ######## !!!!! doppel exp right now, why does it work?
         var_loss = torch.logsumexp(log_phi_x, dim=1) - np.log((log_phi_x).size(1)) - 1 * log_phi_p
 
         ###################################
