@@ -110,7 +110,7 @@ def train(args, train_loader, model, criterion, optimizer, writer):
         sample_mixup = out.expand(2*args.batch_size, 2*args.batch_size, -1)[mask].view(2 * args.batch_size, 2*args.batch_size-2, -1)
         sample_mixup = lam * F.normalize(sample_mixup, dim=2) + (1 - lam) * out.unsqueeze(1)
         sample_mixup = F.normalize(sample_mixup, dim=2)
-        sim_mixup = torch.sum(out * sample_mixup, dim=2)
+        sim_mixup = torch.sum(out.unsqueeze(1) * sample_mixup, dim=2)
         sim_mixup = sim_mixup / args.temperature
 
         reg_mix_log = ((target_mixup - sim_mixup) ** 2).mean(dim=1)
