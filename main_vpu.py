@@ -105,7 +105,7 @@ def train(args, train_loader, model, criterion, optimizer, writer):
         m = torch.distributions.beta.Beta(args.mix_alpha, args.mix_alpha)
         lam = m.sample()
         target_mixup = lam * neg.mean(dim=1) + (1 - lam) *  pos 
-        sample_mixup = out.expand(2*args.batch_size, 2*args.batch_size, -1).masked_select(mask).view(2 * args.batch_size, -1, args.projection_dim).mean(dim=1)
+        sample_mixup = out.expand(2*args.batch_size, 2*args.batch_size, -1).masked_select(mask).view(2 * args.batch_size, 2*args.batch_size-2, -1).mean(dim=1)
         sample_mixup = lam * F.normalize(sample_mixup, dim=1) + (1 - lam) * out
         sample_mixup = F.normalize(sample_mixup, dim=1)
         sim_mixup = torch.sum(out * sample_mixup, dim=-1)
