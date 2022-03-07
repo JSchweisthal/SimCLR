@@ -83,8 +83,8 @@ def train(args, train_loader, model, criterion, optimizer, writer):
         pos = torch.sum(out_1 * out_2, dim=-1) # / args.temperature
         pos = torch.cat([pos, pos], dim=0)
 
-        neg = torch.log((neg+1)/2) / args.temperature
-        pos = torch.log((pos+1)/2) / args.temperature
+        neg = torch.exp(neg / args.temperature) # torch.log((neg+1)/2) / args.temperature
+        pos = torch.exp(pos / args.temperature)# torch.log((pos+1)/2) / args.temperature
         ##
 
         # data_all = torch.cat((data_p, data_x))
@@ -98,27 +98,39 @@ def train(args, train_loader, model, criterion, optimizer, writer):
         log_phi_p = pos
         # output_phi_x = output_phi_all[idx_x]
         var_loss = torch.logsumexp(log_phi_x, dim=1) - torch.log((log_phi_x).shape(1)) - 1 * torch.mean(log_phi_p, dim=1)
-###Important!!
-        # perform Mixup and calculate the regularization
-        target_x = log_phi_x.exp()
-        target_p = torch.ones((log_phi_x.size(0), 2), dtype=torch.float32)
-        target_p = target_p.cuda() if torch.cuda.is_available() else target_p
-        rand_perm = torch.randperm(2)
 
-        data_p_perm, target_p_perm = torch.stack([torch.cat((x_i, x_i)), torch.cat((x_j, x_j))])[:, rand_perm], target_p[:, rand_perm]
-        m = torch.distributions.beta.Beta(config.mix_alpha, config.mix_alpha)
-        lam = m.sample(n=(log_phi_x.size(0),))
-        data_x = torch.cat((x_i, x_j)).expand(2*args.batch_size, -1, -1)[get_negative_mask(args.batch_size)].reshape(2*args.batch_size, 2*args.batch_size -2, -1)
-        data = lam * data_x + (1 - lam) * data_p_perm
-        target = lam * target_x + (1 - lam) * target_p_perm
-        if torch.cuda.is_available():
-            data = data.cuda()
-            target = target.cuda()
-        out_log_phi_all = model_phi(data)
-        reg_mix_log = ((torch.log(target) - out_log_phi_all[:, 1]) ** 2).mean()
+        # cuurently just averaged value and target, can also be computed componentwise and then be averaged!
+        m = torch.distributions.beta.Beta(args.mix_alpha, args.mix_alpha)
+        lam = m.sample()
+        target_mixup = lam * neg.mean(dim=1) + (1 - lam) *  pos 
+        sample_mixup = out.expand(2*args.batch_size, 2*args.batch_size, -1).masked_select(mask).view(2 * args.batch_size, args.projection_dim, -1).mean(dim=1)
+        sample_mixup = lam * F.normalize(sample_mixup, dim=1) + (1 - lam) * out
+        sample_mixup = F.normalize(sample_mixup, dim=1)
+        sim_mixup = torch.sum(out * sample_mixup, dim=-1)
+        sim_mixup = torch.exp(sim_mixup / args.temperature)
+
+        reg_mix_log = ((torch.log(target_mixup) - sim_mixup) ** 2).mean()
+
+#         # perform Mixup and calculate the regularization
+#         target_x = log_phi_x.exp()
+#         target_p = torch.ones((log_phi_x.size(0), 2), dtype=torch.float32)
+#         target_p = target_p.cuda() if torch.cuda.is_available() else target_p
+#         rand_perm = torch.randperm(2)
+
+#         data_p_perm, target_p_perm = torch.stack([torch.cat((x_i, x_i)), torch.cat((x_j, x_j))])[:, rand_perm], target_p[:, rand_perm]
+#         m = torch.distributions.beta.Beta(config.mix_alpha, config.mix_alpha)
+#         lam = m.sample(n=(log_phi_x.size(0),))
+#         data_x = torch.cat((x_i, x_j)).expand(2*args.batch_size, -1, -1)[get_negative_mask(args.batch_size)].reshape(2*args.batch_size, 2*args.batch_size -2, -1)
+#         data = lam * data_x + (1 - lam) * data_p_perm
+#         target = lam * target_x + (1 - lam) * target_p_perm
+#         if torch.cuda.is_available():
+#             data = data.cuda()
+#             target = target.cuda()
+#         out_log_phi_all = model_phi(data)
+#         reg_mix_log = ((torch.log(target) - out_log_phi_all[:, 1]) ** 2).mean()
 
         # calculate gradients and update the network
-        phi_loss = var_loss + config.lam * reg_mix_log
+        phi_loss = var_loss + args.lam * reg_mix_log
 
         #' COSINE SIM TO 0, 1!!' # done
         loss = phi_loss.mean()
