@@ -255,7 +255,7 @@ def main(gpu, args):
     model = SimCLR(encoder, args.projection_dim, n_features)
     if args.reload:
         model_fp = os.path.join(
-            args.model_path, "checkpoint_{}.tar".format(args.epoch_num)
+            args.model_path, "checkpoint_{}.tar".format(args.model_num)
         )
         model.load_state_dict(torch.load(model_fp, map_location=args.device.type))
     model = model.to(args.device)
