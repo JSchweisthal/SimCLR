@@ -99,7 +99,9 @@ def train(args, train_loader, model, criterion, optimizer, writer):
         # output_phi_x = output_phi_all[idx_x]
         var_loss = torch.logsumexp(log_phi_x, dim=1) - np.log((log_phi_x).size(1)) - 1 * log_phi_p
 
-        # cuurently just averaged value and target, can also be computed componentwise and then be averaged!
+        ###################################
+        # !!!!!!!!! cuurently just averaged value and target, can also be computed componentwise and then be averaged!
+        ##################################
         m = torch.distributions.beta.Beta(args.mix_alpha, args.mix_alpha)
         lam = m.sample()
         target_mixup = lam * neg.mean(dim=1) + (1 - lam) *  pos 
@@ -109,7 +111,7 @@ def train(args, train_loader, model, criterion, optimizer, writer):
         sim_mixup = torch.sum(out * sample_mixup, dim=-1)
         sim_mixup = torch.exp(sim_mixup / args.temperature)
 
-        reg_mix_log = ((torch.log(target_mixup) - sim_mixup) ** 2)
+        reg_mix_log = ((torch.log(target_mixup) - torch.log(sim_mixup)) ** 2)
 
 #         # perform Mixup and calculate the regularization
 #         target_x = log_phi_x.exp()
