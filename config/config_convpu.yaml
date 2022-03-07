@@ -67,4 +67,5 @@ tau_plus: 0.32 #
 
 ## VPU:
 lam: 0.03
+mix_alpha: 0.3
 
