@@ -83,8 +83,8 @@ def train(args, train_loader, model, criterion, optimizer, writer):
         pos = torch.sum(out_1 * out_2, dim=-1) # / args.temperature
         pos = torch.cat([pos, pos], dim=0)
 
-        neg = neg / args.temperature # torch.log((neg+1)/2) / args.temperature
-        pos = pos / args.temperature# torch.log((pos+1)/2) / args.temperature
+        neg = torch.exp(neg / args.temperature) # torch.log((neg+1)/2) / args.temperature
+        pos = torch.exp(pos / args.temperature)# torch.log((pos+1)/2) / args.temperature
         ##
 
         # data_all = torch.cat((data_p, data_x))
@@ -106,24 +106,14 @@ def train(args, train_loader, model, criterion, optimizer, writer):
         ##################################
         m = torch.distributions.beta.Beta(args.mix_alpha, args.mix_alpha)
         lam = m.sample()
-        # target_mixup = lam * neg.mean(dim=1) + (1 - lam) *  pos 
-        x_unl_means = torch.cat((x_i, x_j), dim=0).expand(2*args.batch_size, 2*args.batch_size, -1)[mask].view(2 * args.batch_size, 2*args.batch_size-2, -1).mean(dim=1)
-        _, _, out_x_means1, out_x_means2 = model(x_unl_means[:args.batch_size], x_unl_means[args.batch_size:])
-        out_x_means = torch.cat((out_x_means1, out_x_means2), dim=0)
-        out_x_mixup = lam * F.normalize(out_x_means, dim=1) + (1 - lam) * out
-        out_x_mixup = F.normalize(out_x_mixup, dim=1)
-        sim_x_mixup = torch.sum(out * out_x_mixup, dim=-1)
-        sim_x_mixup = sim_x_mixup / args.temperature
+        target_mixup = lam * neg.mean(dim=1) + (1 - lam) *  pos 
+        sample_mixup = out.expand(2*args.batch_size, 2*args.batch_size, -1)[mask].view(2 * args.batch_size, 2*args.batch_size-2, -1).mean(dim=1)
+        sample_mixup = lam * F.normalize(sample_mixup, dim=1) + (1 - lam) * out
+        sample_mixup = F.normalize(sample_mixup, dim=1)
+        sim_mixup = torch.sum(out * sample_mixup, dim=-1)
+        sim_mixup = torch.exp(sim_mixup / args.temperature)
 
-
-
-        out_means = out.expand(2*args.batch_size, 2*args.batch_size, -1)[mask].view(2 * args.batch_size, 2*args.batch_size-2, -1).mean(dim=1)
-        out_mixup = lam * F.normalize(out_means, dim=1) + (1 - lam) * out
-        out_mixup = F.normalize(out_mixup, dim=1)
-        sim_mixup = torch.sum(out * out_mixup, dim=-1)
-        sim_mixup = sim_mixup / args.temperature
-
-        reg_mix_log = (sim_x_mixup - sim_mixup) ** 2
+        reg_mix_log = ((torch.log(target_mixup) - torch.log(sim_mixup)) ** 2)
 
 #         # perform Mixup and calculate the regularization
 #         target_x = log_phi_x.exp()
@@ -265,7 +255,7 @@ def main(gpu, args):
     model = SimCLR(encoder, args.projection_dim, n_features)
     if args.reload:
         model_fp = os.path.join(
-            args.model_path, "checkpoint_{}.tar".format(args.epoch_num)
+            args.model_path, "checkpoint_{}.tar".format(args.model_num)
         )
         model.load_state_dict(torch.load(model_fp, map_location=args.device.type))
     model = model.to(args.device)
