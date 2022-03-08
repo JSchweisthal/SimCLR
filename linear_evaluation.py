@@ -266,6 +266,12 @@ if __name__ == "__main__":
         print(
             f"Epoch [{epoch}/{args.logistic_epochs}]\t Loss: {loss_epoch / len(arr_train_loader)}\t Accuracy: {accuracy_epoch / len(arr_train_loader)}"
         )
+        loss_epoch, accuracy_epoch = test(
+        args, arr_test_loader, simclr_model, model, criterion, optimizer
+        )
+        print(
+            f"[TEST]\t Loss: {loss_epoch / len(arr_test_loader)}\t Accuracy: {accuracy_epoch / len(arr_test_loader)}"
+        )
 
     # final testing
     loss_epoch, accuracy_epoch = test(

@@ -102,7 +102,7 @@ def train(args, train_loader, model, criterion, optimizer, writer):
         var_loss = torch.logsumexp(log_phi_x, dim=1) - np.log((log_phi_x).size(1)) - 1 * log_phi_p
 
         ###################################
-        # !!!!!!!!! cuurently just averaged value and target, can also be computed componentwise and then be averaged!
+        # !!!!!!!!! currently just averaged value and target, can also be computed componentwise and then be averaged!
         ##################################
         m = torch.distributions.beta.Beta(args.mix_alpha, args.mix_alpha)
         lam = m.sample()
