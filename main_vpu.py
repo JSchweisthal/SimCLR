@@ -107,7 +107,7 @@ def train(args, train_loader, model, criterion, optimizer, writer):
         m = torch.distributions.beta.Beta(args.mix_alpha, args.mix_alpha)
         lam = m.sample()
         # target_mixup = lam * neg.mean(dim=1) + (1 - lam) *  pos 
-        x_unl_means = torch.cat((x_i, x_j), dim=0).expand(2*args.batch_size, 2*args.batch_size, -1)[mask].view(2 * args.batch_size, 2*args.batch_size-2, -1).mean(dim=1)
+        x_unl_means = torch.cat((x_i, x_j), dim=0).expand(2*args.batch_size, 2*args.batch_size, 3, args.image_size, args.image_size)[mask].view(2 * args.batch_size, 2*args.batch_size-2, 3, args.image_size, args.image_size).mean(dim=1)
         _, _, out_x_means1, out_x_means2 = model(x_unl_means[:args.batch_size], x_unl_means[args.batch_size:])
         out_x_means = torch.cat((out_x_means1, out_x_means2), dim=0)
         out_x_mixup = lam * F.normalize(out_x_means, dim=1) + (1 - lam) * out
