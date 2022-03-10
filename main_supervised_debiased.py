@@ -323,8 +323,8 @@ def main(gpu, args):
     args.global_step = 0
     args.current_epoch = 0
     for epoch in range(args.start_epoch, args.epochs):
-        if train_sampler is not None:
-            train_sampler.set_epoch(epoch)
+        # if train_sampler is not None:
+        #     train_sampler.set_epoch(epoch)
         
         lr = optimizer.param_groups[0]["lr"]
         loss_epoch = train(args, train_loader, model, criterion, optimizer, writer)
@@ -336,10 +336,10 @@ def main(gpu, args):
             save_model(args, model, optimizer)
 
         if args.nr == 0:
-            writer.add_scalar("Loss/train", loss_epoch / len(train_loader), epoch)
+            writer.add_scalar("Loss/train", loss_epoch / len(train_loader[1]), epoch)
             writer.add_scalar("Misc/learning_rate", lr, epoch)
             print(
-                f"Epoch [{epoch}/{args.epochs}]\t Loss: {loss_epoch / len(train_loader)}\t lr: {round(lr, 5)}"
+                f"Epoch [{epoch}/{args.epochs}]\t Loss: {loss_epoch / len(train_loader[1])}\t lr: {round(lr, 5)}"
             )
             args.current_epoch += 1
 
