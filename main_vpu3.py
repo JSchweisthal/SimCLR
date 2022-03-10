@@ -113,7 +113,7 @@ def train(args, train_loader, model, criterion, optimizer, writer):
         sim_mixup = torch.sum(out.unsqueeze(1) * sample_mixup, dim=2)
         sim_mixup = sim_mixup / args.temperature
 
-        reg_mix_log = ((target_mixup - sim_mixup) ** 2).mean(dim=1) # add log??
+        reg_mix_log = ((target_mixup - sim_mixup) ** 2).mean(dim=1)
 
 #         # perform Mixup and calculate the regularization
 #         target_x = log_phi_x.exp()

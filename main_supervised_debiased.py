@@ -54,7 +54,23 @@ def get_mask_classes(batch_size, labels):
 
 def train(args, train_loader, model, criterion, optimizer, writer):
     loss_epoch = 0
-    for step, ((x_i, x_j), y) in enumerate(train_loader):
+
+    train_loader_pos = iter(train_loader[0])
+
+    for step, ((x_i_unl, x_j_unl), y_unl) in enumerate(train_loader[1]):
+
+        try:
+            ((x_i_pos, x_j_pos), y_pos) = next(train_loader_pos)
+        except StopIteration:
+            train_loader_pos = iter(train_loader[0])
+            ((x_i_pos, x_j_pos), y_pos) = next(train_loader_pos)
+
+    # for step, (((x_i_pos, x_j_pos), y_pos), ((x_i_unl, x_j_unl), y_unl)) in enumerate(train_loader):
+
+        randperm = torch.randperm(len(y_pos)+len(y_unl))
+        x_i = torch.cat((x_i_pos, x_i_unl))[randperm]
+        x_j = torch.cat((x_j_pos, x_j_unl))[randperm]
+        y = torch.cat((y_pos, y_unl))[randperm]
 
         if y.sum() == 0:
             print('Skip batch: No Positive Samples available')
@@ -120,9 +136,9 @@ def train(args, train_loader, model, criterion, optimizer, writer):
             # torch.clamp(loss_neg, min = N * np.e**(-1 / args.temperature))
 
             if nnPU:
-                loss = prior_prime * loss_pos + torch.clamp(loss_neg, min = 0)
+                loss = loss_pos + torch.clamp(loss_neg, min = 0)
             else:
-                loss = prior_prime * loss_pos + loss_neg
+                loss = loss_pos + loss_neg
                 if loss_neg <= 0:
                     print(f"--\n WARNING Step {step}: Possible Overfitting, negative loss: {loss_neg}\n")
 
@@ -221,24 +237,48 @@ def main(gpu, args):
     else:
         raise NotImplementedError
 
-    if args.data_pretrain == "all":
-            train_datasubset_pu = train_dataset
+    if args.data_classif == "PU":
+        idx_pos = [i for i in idxs if (train_dataset.targets[i]==1)]
+        idx_unl = [i for i in idxs if (train_dataset.targets[i]==0)]
 
-    if args.nodes > 1:
-        train_sampler = torch.utils.data.distributed.DistributedSampler(
-            train_datasubset_pu, num_replicas=args.world_size, rank=rank, shuffle=True #train_dataset,
-        )
-    else:
-        train_sampler = None
+        train_datasubset_pos = torch.utils.data.Subset(train_dataset, idx_pos)
+        train_datasubset_unl = torch.utils.data.Subset(train_dataset, idx_unl)
 
-    train_loader = torch.utils.data.DataLoader(
-        train_datasubset_pu, #train_dataset,
-        batch_size=args.batch_size,
-        shuffle=(train_sampler is None),
-        drop_last=True,
-        num_workers=args.workers,
-        sampler=train_sampler
-    )
+        train_loader_pos = torch.utils.data.DataLoader(
+            train_datasubset_pos, #train_dataset,
+            batch_size= int(np.ceil(args.batch_size * len(idx_pos) / (len(idx_pos) + len(idx_unl)))),
+            shuffle=True,
+            drop_last=True,
+            num_workers=args.workers,
+            sampler=None)
+        train_loader_unl = torch.utils.data.DataLoader(
+            train_datasubset_unl, #train_dataset,
+            batch_size=int(np.floor(args.batch_size * len(idx_unl) / (len(idx_pos) + len(idx_unl)))),
+            shuffle=True,
+            drop_last=True,
+            num_workers=args.workers,
+            sampler=None)
+
+        train_loader = (train_loader_pos, train_loader_unl)
+
+    # if args.data_pretrain == "all":
+    #         train_datasubset_pu = train_dataset
+
+    # if args.nodes > 1:
+    #     train_sampler = torch.utils.data.distributed.DistributedSampler(
+    #         train_datasubset_pu, num_replicas=args.world_size, rank=rank, shuffle=True #train_dataset,
+    #     )
+    # else:
+    #     train_sampler = None
+
+    # train_loader = torch.utils.data.DataLoader(
+    #     train_datasubset_pu, #train_dataset,
+    #     batch_size=args.batch_size,
+    #     shuffle=(train_sampler is None),
+    #     drop_last=True,
+    #     num_workers=args.workers,
+    #     sampler=train_sampler
+    # )
     # initialize ResNet
     encoder = get_resnet(args.resnet, pretrained=False)
     n_features = encoder.fc.in_features  # get dimensions of fc layer
