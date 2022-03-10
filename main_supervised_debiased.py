@@ -158,7 +158,7 @@ def train(args, train_loader, model, criterion, optimizer, writer):
                 dist.all_reduce(loss.div_(dist.get_world_size()))
 
             if args.nr == 0 and step % 50 == 0:
-                print(f"Step [{step}/{len(train_loader)}]\t Loss: {loss.item()}")
+                print(f"Step [{step}/{len(train_loader[1])}]\t Loss: {loss.item()}")
 
             if args.nr == 0:
                 writer.add_scalar("Loss/train_epoch", loss.item(), args.global_step)
@@ -371,6 +371,8 @@ if __name__ == "__main__":
     args.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     args.num_gpus = torch.cuda.device_count()
     args.world_size = args.gpus * args.nodes
+
+    print(os.path.basename(__file__))
 
     if args.nodes > 1:
         print(
