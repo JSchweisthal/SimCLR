@@ -26,11 +26,13 @@ from utils import yaml_config_hook
 
 def get_negative_mask(batch_size):
     negative_mask = torch.ones((batch_size, 2 * batch_size), dtype=bool)
-    for i in range(batch_size):
-        negative_mask[i, i] = 0
-        #negative_mask[i, i + batch_size] = 0
+    # for i in range(batch_size):
+    #     negative_mask[i, i] = 0
+    #     #negative_mask[i, i + batch_size] = 0
 
     negative_mask = torch.cat((negative_mask, negative_mask), 0)
+    for i in range(negative_mask.shape[0]):
+        negative_mask[i, i] = 99
     return negative_mask
 
 ###new
@@ -47,14 +49,34 @@ def get_mask_classes(batch_size, labels):
             else:
                 mat[i, j] = -1
                 mat[i, j + batch_size] = -1
-        mat[i, i] = 99
 
     mat = torch.cat((mat, mat), 0)
+
+    for i in range(mat.shape[0]):
+        mat[i, i] = 99
+
     return mat
 
 def train(args, train_loader, model, criterion, optimizer, writer):
     loss_epoch = 0
-    for step, ((x_i, x_j), y) in enumerate(train_loader):
+
+    train_loader_pos = iter(train_loader[0])
+
+    for step, ((x_i_unl, x_j_unl), y_unl) in enumerate(train_loader[1]):
+
+        try:
+            ((x_i_pos, x_j_pos), y_pos) = next(train_loader_pos)
+        except StopIteration:
+            train_loader_pos = iter(train_loader[0])
+            ((x_i_pos, x_j_pos), y_pos) = next(train_loader_pos)
+
+    # for step, (((x_i_pos, x_j_pos), y_pos), ((x_i_unl, x_j_unl), y_unl)) in enumerate(train_loader):
+
+        randperm = torch.randperm(len(y_pos)+len(y_unl))
+        x_i = torch.cat((x_i_pos, x_i_unl))[randperm]
+        x_j = torch.cat((x_j_pos, x_j_unl))[randperm]
+        y = torch.cat((y_pos, y_unl))[randperm]
+
 
         if y.sum() == 0:
             print('Skip batch: No Positive Samples available')
@@ -148,7 +170,7 @@ def train(args, train_loader, model, criterion, optimizer, writer):
                 dist.all_reduce(loss.div_(dist.get_world_size()))
 
             if args.nr == 0 and step % 50 == 0:
-                print(f"Step [{step}/{len(train_loader)}]\t Loss: {loss.item()}")
+                print(f"Step [{step}/{len(train_loader[1])}]\t Loss: {loss.item()}")
 
             if args.nr == 0:
                 writer.add_scalar("Loss/train_epoch", loss.item(), args.global_step)
@@ -226,25 +248,52 @@ def main(gpu, args):
             train_datasubset_pu = torch.utils.data.Subset(train_dataset, idxs) 
     else:
         raise NotImplementedError
+    
 
-    if args.data_pretrain == "all":
-            train_datasubset_pu = train_dataset
+    if args.data_classif == "PU":
+        idx_pos = [i for i in idxs if (train_dataset.targets[i]==1)]
+        idx_unl = [i for i in idxs if (train_dataset.targets[i]==0)]
 
-    if args.nodes > 1:
-        train_sampler = torch.utils.data.distributed.DistributedSampler(
-            train_datasubset_pu, num_replicas=args.world_size, rank=rank, shuffle=True #train_dataset,
-        )
-    else:
-        train_sampler = None
+        train_datasubset_pos = torch.utils.data.Subset(train_dataset, idx_pos)
+        train_datasubset_unl = torch.utils.data.Subset(train_dataset, idx_unl)
 
-    train_loader = torch.utils.data.DataLoader(
-        train_datasubset_pu, #train_dataset,
-        batch_size=args.batch_size,
-        shuffle=(train_sampler is None),
-        drop_last=True,
-        num_workers=args.workers,
-        sampler=train_sampler
-    )
+        train_loader_pos = torch.utils.data.DataLoader(
+            train_datasubset_pos, #train_dataset,
+            batch_size= int(np.ceil(args.batch_size * len(idx_pos) / (len(idx_pos) + len(idx_unl)))),
+            shuffle=True,
+            drop_last=True,
+            num_workers=args.workers,
+            sampler=None)
+        train_loader_unl = torch.utils.data.DataLoader(
+            train_datasubset_unl, #train_dataset,
+            batch_size=int(np.floor(args.batch_size * len(idx_unl) / (len(idx_pos) + len(idx_unl)))),
+            shuffle=True,
+            drop_last=True,
+            num_workers=args.workers,
+            sampler=None)
+
+        train_loader = (train_loader_pos, train_loader_unl)
+
+
+    # if args.data_pretrain == "all":
+    #         train_datasubset_pu = train_dataset
+
+    # if args.nodes > 1:
+    #     train_sampler = torch.utils.data.distributed.DistributedSampler(
+    #         train_datasubset_pu, num_replicas=args.world_size, rank=rank, shuffle=True #train_dataset,
+    #     )
+    # else:
+    #     train_sampler = None
+
+
+    # train_loader = torch.utils.data.DataLoader(
+    #     train_datasubset_pu, #train_dataset,
+    #     batch_size=args.batch_size,
+    #     shuffle=(train_sampler is None),
+    #     drop_last=True,
+    #     num_workers=args.workers,
+    #     sampler=train_sampler
+    # )
     # initialize ResNet
     encoder = get_resnet(args.resnet, pretrained=False)
     n_features = encoder.fc.in_features  # get dimensions of fc layer
@@ -289,8 +338,8 @@ def main(gpu, args):
     args.global_step = 0
     args.current_epoch = 0
     for epoch in range(args.start_epoch, args.epochs):
-        if train_sampler is not None:
-            train_sampler.set_epoch(epoch)
+        # if train_sampler is not None:
+        #     train_sampler.set_epoch(epoch)
         
         lr = optimizer.param_groups[0]["lr"]
         loss_epoch = train(args, train_loader, model, criterion, optimizer, writer)
@@ -302,10 +351,10 @@ def main(gpu, args):
             save_model(args, model, optimizer)
 
         if args.nr == 0:
-            writer.add_scalar("Loss/train", loss_epoch / len(train_loader), epoch)
+            writer.add_scalar("Loss/train", loss_epoch / len(train_loader[1]), epoch)
             writer.add_scalar("Misc/learning_rate", lr, epoch)
             print(
-                f"Epoch [{epoch}/{args.epochs}]\t Loss: {loss_epoch / len(train_loader)}\t lr: {round(lr, 5)}"
+                f"Epoch [{epoch}/{args.epochs}]\t Loss: {loss_epoch / len(train_loader[1])}\t lr: {round(lr, 5)}"
             )
             args.current_epoch += 1
 
