@@ -266,7 +266,7 @@ if __name__ == "__main__":
     model.fc = nn.Linear(2048, 1)
     model = model.to(args.device)
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=3e-4)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-5) # learning rate changed!
     # criterion = torch.nn.CrossEntropyLoss()
 
     prior = ((1-args.PU_ratio)*3/33)/(1-args.PU_ratio*3/33) if args.data_pretrain == "imbalanced" else ((1-args.PU_ratio)*2/5)/(1-args.PU_ratio*2/5)
