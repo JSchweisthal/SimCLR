@@ -284,7 +284,7 @@ if __name__ == "__main__":
         #     train_sampler.set_epoch(epoch)
         
         lr = optimizer.param_groups[0]["lr"]
-        loss_epoch = train(args, train_loader, model, criterion, optimizer, writer)
+        loss_epoch = train(args, train_loader, model, criterion, optimizer)
 
         # if args.nr == 0 and scheduler:
         #     scheduler.step()
