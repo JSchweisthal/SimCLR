@@ -141,6 +141,9 @@ if __name__ == "__main__":
 
     args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+    if not os.path.exists(args.model_path):
+        os.makedirs(args.model_path)
+
     if args.dataset == "STL10":
         train_dataset = torchvision.datasets.STL10(
             args.dataset_dir,
@@ -279,6 +282,8 @@ if __name__ == "__main__":
 
     args.global_step = 0
     args.current_epoch = 0
+
+    print(f"File: {os.path.basename(__file__)}\n Config: {args.config} \n Start Training...")
     for epoch in range(args.start_epoch, args.epochs):
         # if train_sampler is not None:
         #     train_sampler.set_epoch(epoch)
