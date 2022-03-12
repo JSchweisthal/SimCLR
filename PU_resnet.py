@@ -273,15 +273,6 @@ if __name__ == "__main__":
 
     criterion = OversampledPULoss(prior=prior, prior_prime=0.5, nnPU=True) 
 
-    # print("### Creating features from pre-trained context model ###")
-    # (train_X, train_y, test_X, test_y) = get_features(
-    #     simclr_model, train_loader, test_loader, args.device
-    # )
-
-    # arr_train_loader, arr_test_loader = create_data_loaders_from_arrays(
-    #     train_X, train_y, test_X, test_y, args.logistic_batch_size
-    # )
-
     writer = None
     if args.nr == 0:
         writer = SummaryWriter(args.config)
@@ -319,34 +310,13 @@ if __name__ == "__main__":
             writer.add_scalar("TestScore/auc", auc_epoch / len(test_loader), epoch)
 
             print(
-                f"[TEST]\t Loss: {round(loss_epoch / len(test_loader), 4)}\t Accuracy: {round(accuracy_epoch / len(test_loader), 4)}\t F1\
-                    : {round(f1_epoch / len(test_loader), 4)}\t AUC\: {round(auc_epoch / len(test_loader), 4)}"
+                f"[TEST]\t Loss: {round(loss_epoch / len(test_loader), 4)}\t Accuracy: {round(accuracy_epoch / len(test_loader), 4)}\t F1: {round(f1_epoch / len(test_loader), 4)}\t AUC: {round(auc_epoch / len(test_loader), 4)}"
             )
             args.current_epoch += 1
 
     ## end training
     save_model(args, model, optimizer)
 
-    # for epoch in range(args.logistic_epochs):
-    #     loss_epoch, model = train(
-    #         args, arr_train_loader, model, criterion, optimizer
-    #     )
-    #     print(
-    #         f"Epoch [{epoch}/{args.logistic_epochs}]\t Loss: {loss_epoch / len(arr_train_loader)}\t Accuracy: {accuracy_epoch / len(arr_train_loader)}\t F1: {f1_epoch / len(arr_train_loader)}"
-    #     )
-    #     # final testing
-    #     loss_epoch, accuracy_epoch, f1_epoch  = test(
-    #         args, arr_test_loader, model, criterion, optimizer
-    #     )
-    #     print(
-    #         f"[TEST]:\t Loss: {loss_epoch / len(arr_test_loader)}\t Accuracy: {accuracy_epoch / len(arr_test_loader)}\t F1: {f1_epoch / len(arr_test_loader)}"
-    #     )
-    # # final testing
-    # loss_epoch, accuracy_epoch, f1_epoch  = test(
-    #     args, arr_test_loader, model, criterion, optimizer
-    # )
-    # print(
-    #     f"[FINAL]\t Loss: {loss_epoch / len(arr_test_loader)}\t Accuracy: {accuracy_epoch / len(arr_test_loader)}\t F1: {f1_epoch / len(arr_test_loader)}"
-    # )
+
 
 
