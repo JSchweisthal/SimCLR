@@ -12,7 +12,7 @@ from simclr.modules.transformations import TransformsSimCLR
 
 from utils import yaml_config_hook
 
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, roc_auc_score
 
 
 def inference(loader, simclr_model, device):
@@ -102,6 +102,7 @@ def test(args, loader, model, criterion, optimizer):
     loss_epoch = 0
     accuracy_epoch = 0
     f1_epoch = 0
+    auc_epoch= 0
     model.eval()
     for step, (x, y) in enumerate(loader):
         model.zero_grad()
@@ -118,10 +119,12 @@ def test(args, loader, model, criterion, optimizer):
             accuracy_epoch += acc
             f1 = f1_score(y.cpu().numpy(), predicted.cpu().numpy())
             f1_epoch += f1
+            auc = roc_auc_score(y.cpu().numpy(), output.cpu().numpy())
+            auc_epoch += auc
 
             loss_epoch += loss.item()
 
-    return loss_epoch, accuracy_epoch, f1_epoch
+    return loss_epoch, accuracy_epoch, f1_epoch, auc_epoch
 
 
 class OversampledPULoss(nn.Module):
@@ -332,19 +335,20 @@ if __name__ == "__main__":
             args, arr_train_loader, model, criterion, optimizer
         )
         print(
-            f"Epoch [{epoch}/{args.logistic_epochs}]\t Loss: {loss_epoch / len(arr_train_loader)}\t Accuracy: {accuracy_epoch / len(arr_train_loader)}\t F1: {f1_epoch / len(arr_train_loader)}"
+            f"Epoch [{epoch}/{args.logistic_epochs}]\t Loss: {loss_epoch / len(arr_train_loader)}"
+            # \t Accuracy: {accuracy_epoch / len(arr_train_loader)}\t F1: {f1_epoch / len(arr_train_loader)}
         )
         # final testing
-        loss_epoch, accuracy_epoch, f1_epoch  = test(
+        loss_epoch, accuracy_epoch, f1_epoch, auc_epoch  = test(
             args, arr_test_loader, model, criterion, optimizer
         )
         print(
-            f"[TEST]:\t Loss: {loss_epoch / len(arr_test_loader)}\t Accuracy: {accuracy_epoch / len(arr_test_loader)}\t F1: {f1_epoch / len(arr_test_loader)}"
+            f"[TEST]:\t Loss: {loss_epoch / len(arr_test_loader)}\t Accuracy: {accuracy_epoch / len(arr_test_loader)}\t F1: {f1_epoch / len(arr_test_loader)}\t AUC: {auc_epoch / len(arr_test_loader)}"
         )
     # final testing
     loss_epoch, accuracy_epoch, f1_epoch  = test(
         args, arr_test_loader, model, criterion, optimizer
     )
     print(
-        f"[FINAL]\t Loss: {loss_epoch / len(arr_test_loader)}\t Accuracy: {accuracy_epoch / len(arr_test_loader)}\t F1: {f1_epoch / len(arr_test_loader)}"
+        f"[FINAL]\t Loss: {loss_epoch / len(arr_test_loader)}\t Accuracy: {accuracy_epoch / len(arr_test_loader)}\t F1: {f1_epoch / len(arr_test_loader)}\t AUC: {auc_epoch / len(arr_test_loader)}"
     )
