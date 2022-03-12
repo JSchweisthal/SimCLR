@@ -50,6 +50,8 @@ def train(args, loader, model, criterion, optimizer):
         #     print(
         #         f"Step [{step}/{len(loader)}]\t Loss: {loss.item()}\t Accuracy: {acc}"
         #     )
+        if args.nr == 0 and step % 50 == 0:
+            print(f"Step [{step}/{len(loader)}]\t Loss: {loss.item()}")
 
     return loss_epoch #, accuracy_epoch, f1_epoch
 
@@ -76,9 +78,6 @@ def test(args, loader, model, criterion, optimizer):
         auc = roc_auc_score(y.cpu().numpy(), output.cpu().numpy())
 
         loss_epoch += loss.item()
-
-        if args.nr == 0 and step % 50 == 0:
-            print(f"Step [{step}/{len(loader)}]\t Loss: {loss.item()}")
 
     return loss_epoch, accuracy_epoch, f1_epoch, auc
 
