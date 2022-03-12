@@ -62,6 +62,7 @@ def create_data_loaders_from_arrays(X_train, y_train, X_test, y_test, batch_size
 def train(args, loader, simclr_model, model, criterion, optimizer):
     loss_epoch = 0
     accuracy_epoch = 0
+    model.train()
     for step, (x, y) in enumerate(loader):
         optimizer.zero_grad()
 
@@ -93,18 +94,19 @@ def test(args, loader, simclr_model, model, criterion, optimizer):
     model.eval()
     for step, (x, y) in enumerate(loader):
         model.zero_grad()
+        with torch.no_grad():
 
-        x = x.to(args.device)
-        y = y.to(args.device)
+            x = x.to(args.device)
+            y = y.to(args.device)
 
-        output = model(x)
-        loss = criterion(output, y)
+            output = model(x).detach()
+            loss = criterion(output, y)
 
-        predicted = output.argmax(1)
-        acc = (predicted == y).sum().item() / y.size(0)
-        accuracy_epoch += acc
+            predicted = output.argmax(1)
+            acc = (predicted == y).sum().item() / y.size(0)
+            accuracy_epoch += acc
 
-        loss_epoch += loss.item()
+            loss_epoch += loss.item()
 
     return loss_epoch, accuracy_epoch
 
