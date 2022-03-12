@@ -77,6 +77,9 @@ def test(args, loader, model, criterion, optimizer):
 
         loss_epoch += loss.item()
 
+        if args.nr == 0 and step % 50 == 0:
+            print(f"Step [{step}/{len(loader)}]\t Loss: {loss.item()}")
+
     return loss_epoch, accuracy_epoch, f1_epoch, auc
 
 
@@ -283,7 +286,7 @@ if __name__ == "__main__":
     args.global_step = 0
     args.current_epoch = 0
 
-    print(f"File: {os.path.basename(__file__)}\nConfig: {args.config} \nStart Training...")
+    print(f"File: {os.path.basename(__file__)}\nConfig: {args.config}\nStart Training...")
     for epoch in range(args.start_epoch, args.epochs):
         # if train_sampler is not None:
         #     train_sampler.set_epoch(epoch)
