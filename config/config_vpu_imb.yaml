@@ -64,3 +64,6 @@ PU_ratio: 0.2
 # debiased: True
 # tau_plus: 0.08 # 
 
+mix_alpha: 0.3
+lam: 0.03
+
