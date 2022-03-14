@@ -120,7 +120,7 @@ def test(args, loader, model, optimizer):
             accuracy_epoch += acc
             f1 = f1_score(y.cpu().numpy(), predicted.cpu().numpy())
             f1_epoch += f1
-            auc = roc_auc_score(y.cpu().numpy(), output.cpu().numpy())
+            auc = roc_auc_score(y.cpu().numpy(), output[:, 1].cpu().numpy())
             auc_epoch += auc
 
             # loss_epoch += loss.item()
