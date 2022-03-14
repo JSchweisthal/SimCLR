@@ -114,7 +114,7 @@ def test(args, loader, model, optimizer):
             output = torch.flatten(model(x)).detach()
             # loss = criterion(output, y)
 
-            predicted = ((torch.sign(output)+1)/2).int()
+            predicted = output.argmax(1)
             acc = (predicted == y).sum().item() / y.size(0)
             accuracy_epoch += acc
             f1 = f1_score(y.cpu().numpy(), predicted.cpu().numpy())
