@@ -24,11 +24,13 @@ def train(args, loader, model, optimizer):
     accuracy_epoch = 0
     f1_epoch = 0
 
+    log_softmax = nn.LogSoftmax(dim=1)
     p_loader = loader[0]
     x_loader = loader[1]
     model_phi = model
     opt_phi = optimizer
     model_phi.train()
+
 
     for batch_idx in range(len(p_loader)):
 
@@ -50,6 +52,7 @@ def train(args, loader, model, optimizer):
         # calculate the variational loss
         data_all = torch.cat((data_p, data_x))
         output_phi_all = model_phi(data_all)
+        output_phi_all = log_softmax(output_phi_all)
         log_phi_all = output_phi_all[:, 1]
         idx_p = slice(0, len(data_p))
         idx_x = slice(len(data_p), len(data_all))
@@ -281,7 +284,7 @@ if __name__ == "__main__":
 
  
     model = torchvision.models.resnet50(pretrained=False)
-    model.fc = nn.Linear(2048, 1)
+    model.fc = nn.Linear(2048, 2)
     model = model.to(args.device)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-5) # learning rate changed!
@@ -289,7 +292,7 @@ if __name__ == "__main__":
 
     writer = None
     if args.nr == 0:
-        writer = SummaryWriter(args.config)
+        writer = SummaryWriter('runs/' + args.config)
 
     args.global_step = 0
     args.current_epoch = 0
