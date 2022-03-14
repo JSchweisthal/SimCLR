@@ -319,7 +319,7 @@ if __name__ == "__main__":
                 f"Epoch [{epoch}/{args.epochs}]\t Loss: {loss_epoch / len(train_loader)}" #\t lr: {round(lr, 5)}
             )
 
-            loss_epoch, accuracy_epoch, f1_epoch, auc_epoch  = test(
+            accuracy_epoch, f1_epoch, auc_epoch  = test(
                 args, test_loader, model, optimizer
             )
             writer.add_scalar("Loss/test", loss_epoch / len(test_loader), epoch)
