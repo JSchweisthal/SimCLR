@@ -67,7 +67,7 @@ def train(args, loader, model, optimizer):
         target_p = target_p.cuda() if torch.cuda.is_available() else target_p
         rand_perm = torch.randperm(data_p.size(0))
         data_p_perm, target_p_perm = data_p[rand_perm], target_p[rand_perm]
-        m = torch.distributions.beta.Beta(config.mix_alpha, config.mix_alpha)
+        m = torch.distributions.beta.Beta(args.mix_alpha, args.mix_alpha)
         lam = m.sample()
         data = lam * data_x + (1 - lam) * data_p_perm
         target = lam * target_x + (1 - lam) * target_p_perm
@@ -78,7 +78,7 @@ def train(args, loader, model, optimizer):
         reg_mix_log = ((torch.log(target) - out_log_phi_all[:, 1]) ** 2).mean()
 
         # calculate gradients and update the network
-        phi_loss = var_loss + config.lam * reg_mix_log
+        phi_loss = var_loss + args.lam * reg_mix_log
         opt_phi.zero_grad()
         phi_loss.backward()
         opt_phi.step()
