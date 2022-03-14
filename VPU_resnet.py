@@ -56,7 +56,7 @@ def train(args, loader, model, optimizer):
         log_phi_x = log_phi_all[idx_x]
         log_phi_p = log_phi_all[idx_p]
         output_phi_x = output_phi_all[idx_x]
-        var_loss = torch.logsumexp(log_phi_x, dim=0) - math.log(len(log_phi_x)) - 1 * torch.mean(log_phi_p)
+        var_loss = torch.logsumexp(log_phi_x, dim=0) - np.log(len(log_phi_x)) - 1 * torch.mean(log_phi_p)
 
         # perform Mixup and calculate the regularization
         target_x = output_phi_x[:, 1].exp()
@@ -95,7 +95,7 @@ def train(args, loader, model, optimizer):
 
 
 
-def test(args, loader, model, criterion, optimizer):
+def test(args, loader, model, optimizer):
     loss_epoch = 0
     accuracy_epoch = 0
     f1_epoch = 0
@@ -287,10 +287,6 @@ if __name__ == "__main__":
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-5) # learning rate changed!
     # criterion = torch.nn.CrossEntropyLoss()
 
-    prior = ((1-args.PU_ratio)*3/33)/(1-args.PU_ratio*3/33) if args.data_pretrain == "imbalanced" else ((1-args.PU_ratio)*2/5)/(1-args.PU_ratio*2/5)
-
-    criterion = OversampledPULoss(prior=prior, prior_prime=0.5, nnPU=True) 
-
     writer = None
     if args.nr == 0:
         writer = SummaryWriter(args.config)
@@ -304,7 +300,7 @@ if __name__ == "__main__":
         #     train_sampler.set_epoch(epoch)
         
         lr = optimizer.param_groups[0]["lr"]
-        loss_epoch = train(args, train_loader, model, criterion, optimizer)
+        loss_epoch = train(args, train_loader, model, optimizer)
 
         # if args.nr == 0 and scheduler:
         #     scheduler.step()
@@ -320,7 +316,7 @@ if __name__ == "__main__":
             )
 
             loss_epoch, accuracy_epoch, f1_epoch, auc_epoch  = test(
-                args, test_loader, model, criterion, optimizer
+                args, test_loader, model, optimizer
             )
             writer.add_scalar("Loss/test", loss_epoch / len(test_loader), epoch)
             writer.add_scalar("TestScore/accuracy", accuracy_epoch / len(test_loader), epoch)
