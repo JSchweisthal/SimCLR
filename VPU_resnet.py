@@ -111,7 +111,8 @@ def test(args, loader, model, optimizer):
             x = x.to(args.device)
             y = y.to(args.device).float()
 
-            output = torch.flatten(model(x)).detach()
+            # output = torch.flatten(model(x)).detach()
+            output =(model(x)).detach()
             # loss = criterion(output, y)
 
             predicted = output.argmax(1)
