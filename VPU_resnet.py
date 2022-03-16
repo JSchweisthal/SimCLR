@@ -322,14 +322,14 @@ if __name__ == "__main__":
             accuracy_epoch, f1_epoch, auc_epoch  = test(
                 args, test_loader, model, optimizer
             )
-            writer.add_scalar("Loss/test", loss_epoch / len(test_loader), epoch)
+            # writer.add_scalar("Loss/test", loss_epoch / len(test_loader), epoch)
             writer.add_scalar("TestScore/accuracy", accuracy_epoch / len(test_loader), epoch)
             writer.add_scalar("TestScore/F1", f1_epoch / len(test_loader), epoch)
             writer.add_scalar("TestScore/auc", auc_epoch / len(test_loader), epoch)
 
             print(
-                f"[TEST]\t Loss: {round(loss_epoch / len(test_loader), 4)}\t Accuracy: {round(accuracy_epoch / len(test_loader), 4)}\t F1: {round(f1_epoch / len(test_loader), 4)}\t AUC: {round(auc_epoch / len(test_loader), 4)}"
-            )
+                f"[TEST]\t Accuracy: {round(accuracy_epoch / len(test_loader), 4)}\t F1: {round(f1_epoch / len(test_loader), 4)}\t AUC: {round(auc_epoch / len(test_loader), 4)}"
+            ) #\t Loss: {round(loss_epoch / len(test_loader), 4)}\t 
             args.current_epoch += 1
 
     ## end training
