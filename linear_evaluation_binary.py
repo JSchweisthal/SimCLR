@@ -266,7 +266,20 @@ if __name__ == "__main__":
         
         if args.data_classif == "PU":
             test_dataset.targets = torch.tensor(test_dataset.targets)
-            test_dataset.targets = torch.where(torch.isin(test_dataset.targets, torch.tensor([0, 1, 8, 9])), 1, 0)  
+            test_dataset.targets = torch.where(torch.isin(test_dataset.targets, torch.tensor([0, 1, 8, 9])), 1, 0)
+
+    elif args.dataset == "GLAUCOMA":
+        from glaucoma import GLAUCOMA
+        train_dataset = GLAUCOMA(
+            args.dataset_dir,
+            train=True,
+            transform=TransformsSimCLR(size=args.image_size).test_transform,
+        )  
+        test_dataset = GLAUCOMA(
+            args.dataset_dir,
+            train=False,
+            transform=TransformsSimCLR(size=args.image_size).test_transform,
+        )
     else:
         raise NotImplementedError
 
