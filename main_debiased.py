@@ -158,6 +158,13 @@ def main(gpu, args):
             if args.data_classif == "PU":  
                 train_dataset.targets[idxtargets_up] = 0
             train_datasubset_pu = torch.utils.data.Subset(train_dataset, idxs) 
+    elif args.dataset == "GLAUCOMA":
+        from glaucoma import GLAUCOMA
+        train_dataset = GLAUCOMA(
+            args.dataset_dir,
+            transform=TransformsSimCLR(size=args.image_size),
+        )
+
     else:
         raise NotImplementedError
 
