@@ -359,7 +359,7 @@ if __name__ == "__main__":
             f"[TEST]:\t Loss: {loss_epoch / len(arr_test_loader)}\t Accuracy: {accuracy_epoch / len(arr_test_loader)}\t F1: {f1_epoch / len(arr_test_loader)}\t AUC: {auc_epoch / len(arr_test_loader)}"
         )
     # final testing
-    loss_epoch, accuracy_epoch, f1_epoch  = test(
+    loss_epoch, accuracy_epoch, f1_epoch, auc_epoch  = test(
         args, arr_test_loader, model, criterion, optimizer
     )
     print(
