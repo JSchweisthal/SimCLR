@@ -275,6 +275,13 @@ if __name__ == "__main__":
             train=True,
             transform=TransformsSimCLR(size=args.image_size).test_transform,
         )  
+        if args.args.data_classif == "PU":
+            train_dataset.targets = torch.tensor(train_dataset.targets)
+            idxs_pos = [i for i in range(len(train_dataset.targets)) if train_dataset.targets[i]==1]
+            idxs_pos_unl = idxs_pos[:int((1-args.PU_ratio)*len(idxs_pos))]
+            idxs_pos_unl = torch.tensor(idxs_pos_unl)
+            train_dataset.targets[idxs_pos_unl] = 0
+
         test_dataset = GLAUCOMA(
             args.dataset_dir,
             train=False,
@@ -330,8 +337,12 @@ if __name__ == "__main__":
     optimizer = torch.optim.Adam(model.parameters(), lr=3e-4)
     # criterion = torch.nn.CrossEntropyLoss()
 
-    if args.data_classif == 'PU':    
-        prior = ((1-args.PU_ratio)*3/33)/(1-args.PU_ratio*3/33) if args.data_pretrain == "imbalanced" else ((1-args.PU_ratio)*2/5)/(1-args.PU_ratio*2/5)
+    if args.data_classif == 'PU':
+        if args.dataset == 'CIFAR10':  
+            prior = ((1-args.PU_ratio)*3/33)/(1-args.PU_ratio*3/33) if args.data_pretrain == "imbalanced" else ((1-args.PU_ratio)*2/5)/(1-args.PU_ratio*2/5)
+        elif args.dataset == 'GLAUCOMA':
+            prior = ((1-args.PU_ratio)*817/2037)/(1-args.PU_ratio*817/2037) 
+
 
         criterion = OversampledPULoss(prior=prior, prior_prime=0.5, nnPU=True) 
     elif args.data_classif == 'binary':

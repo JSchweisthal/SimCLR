@@ -40,7 +40,7 @@ fp16: False
 fp16_opt_level: "O2"
 
 # logistic regression options
-logistic_batch_size: 512
+logistic_batch_size: 256
 logistic_epochs: 100 #500
 
 
