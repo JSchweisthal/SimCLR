@@ -246,13 +246,30 @@ def main(gpu, args):
                 train_dataset.targets = torch.where(torch.isin(train_dataset.targets, torch.tensor([0, 1, 8, 9])), 1, 0)  
                 train_dataset.targets[idxtargets_up] = 0
             train_datasubset_pu = torch.utils.data.Subset(train_dataset, idxs) 
+    elif args.dataset == "GLAUCOMA":
+        from glaucoma import GLAUCOMA
+        train_dataset = GLAUCOMA(
+            args.dataset_dir,
+            transform=TransformsSimCLR(size=args.image_size),
+        )
+        if args.data_classif == "PU":
+            train_dataset.labels = torch.tensor(train_dataset.labels)
+            idxs_pos = [i for i in range(len(train_dataset.labels)) if train_dataset.labels[i]==1]
+            idxs_pos_unl = idxs_pos[:int((1-args.PU_ratio)*len(idxs_pos))]
+            idxs_pos_unl = torch.tensor(idxs_pos_unl)
+            train_dataset.labels[idxs_pos_unl] = 0
+
     else:
         raise NotImplementedError
-    
 
     if args.data_classif == "PU":
-        idx_pos = [i for i in idxs if (train_dataset.targets[i]==1)]
-        idx_unl = [i for i in idxs if (train_dataset.targets[i]==0)]
+        if args.dataset=='CIFAR10':
+            idx_pos = [i for i in idxs if (train_dataset.targets[i]==1)]
+            idx_unl = [i for i in idxs if (train_dataset.targets[i]==0)]
+        elif args.dataset=='GLAUCOMA':
+            idxs = list(range(len(train_dataset.labels)))
+            idx_pos = [i for i in idxs if (train_dataset.labels[i]==1)]
+            idx_unl = [i for i in idxs if (train_dataset.labels[i]==0)]
 
         train_datasubset_pos = torch.utils.data.Subset(train_dataset, idx_pos)
         train_datasubset_unl = torch.utils.data.Subset(train_dataset, idx_unl)
