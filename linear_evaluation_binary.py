@@ -357,6 +357,7 @@ if __name__ == "__main__":
         train_X, train_y, test_X, test_y, args.logistic_batch_size
     )
 
+    print(f"File: {os.path.basename(__file__)}\nConfig: {args.config}\nStart Training...")
     for epoch in range(args.logistic_epochs):
         loss_epoch, accuracy_epoch, f1_epoch = train(
             args, arr_train_loader, model, criterion, optimizer
