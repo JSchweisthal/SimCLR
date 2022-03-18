@@ -261,6 +261,7 @@ def main(gpu, args):
             idx_pos = [i for i in idxs if (train_dataset.targets[i]==1)]
             idx_unl = [i for i in idxs if (train_dataset.targets[i]==0)]
         elif args.dataset=='GLAUCOMA':
+            idxs = list(range(len(train_dataset.labels)))
             idx_pos = [i for i in idxs if (train_dataset.labels[i]==1)]
             idx_unl = [i for i in idxs if (train_dataset.labels[i]==0)]
 
