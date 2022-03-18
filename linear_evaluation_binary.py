@@ -275,7 +275,7 @@ if __name__ == "__main__":
             train=True,
             transform=TransformsSimCLR(size=args.image_size).test_transform,
         )  
-        if args.args.data_classif == "PU":
+        if args.data_classif == "PU":
             train_dataset.targets = torch.tensor(train_dataset.targets)
             idxs_pos = [i for i in range(len(train_dataset.targets)) if train_dataset.targets[i]==1]
             idxs_pos_unl = idxs_pos[:int((1-args.PU_ratio)*len(idxs_pos))]

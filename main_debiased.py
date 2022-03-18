@@ -164,7 +164,7 @@ def main(gpu, args):
             args.dataset_dir,
             transform=TransformsSimCLR(size=args.image_size),
         )
-        if args.args.data_classif == "PU":
+        if args.data_classif == "PU":
             idxs_pos = [i for i in range(len(train_dataset.targets)) if train_dataset.targets[i]==1]
             idxs_pos_unl = idxs_pos[:int((1-args.PU_ratio)*len(idxs_pos))]
             idxs_pos_unl = torch.tensor(idxs_pos_unl)
