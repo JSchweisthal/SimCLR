@@ -282,7 +282,7 @@ if __name__ == "__main__":
             gen0 = torch.Generator()
             gen0 = gen0.manual_seed(0)
             rperm = torch.randperm(len(idxs_pos), generator=gen0)
-            idxs_pos = idxs_pos[rperm]
+            idxs_pos = torch.tensor(idxs_pos)[rperm]
 
             idxs_pos_unl = idxs_pos[:int((1-args.PU_ratio)*len(idxs_pos))]
             idxs_pos_unl = torch.tensor(idxs_pos_unl)
