@@ -278,6 +278,11 @@ if __name__ == "__main__":
         if args.data_classif == "PU":
             train_dataset.labels = torch.tensor(train_dataset.labels)
             idxs_pos = [i for i in range(len(train_dataset.labels)) if train_dataset.labels[i]==1]
+
+            gen0 = torch.Generator()
+            rperm = torch.randperm(len(idxs_pos), generator=gen0)
+            idxs_pos = idxs_pos[rperm]
+
             idxs_pos_unl = idxs_pos[:int((1-args.PU_ratio)*len(idxs_pos))]
             idxs_pos_unl = torch.tensor(idxs_pos_unl)
             train_dataset.labels[idxs_pos_unl] = 0
