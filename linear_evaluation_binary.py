@@ -335,7 +335,7 @@ if __name__ == "__main__":
 
         criterion = OversampledPULoss(prior=prior, prior_prime=0.5, nnPU=True) 
     elif args.data_classif == 'binary':
-        criterion = nn.BCEWithLogitsLoss(pos_weight=1220/817)
+        criterion = nn.BCEWithLogitsLoss(pos_weight=torch.tensor(1220/817))
 
     print("### Creating features from pre-trained context model ###")
     (train_X, train_y, test_X, test_y) = get_features(
