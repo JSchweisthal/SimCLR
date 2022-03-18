@@ -280,6 +280,7 @@ if __name__ == "__main__":
             idxs_pos = [i for i in range(len(train_dataset.labels)) if train_dataset.labels[i]==1]
 
             gen0 = torch.Generator()
+            gen0 = gen0.manual_seed(0)
             rperm = torch.randperm(len(idxs_pos), generator=gen0)
             idxs_pos = idxs_pos[rperm]
 
