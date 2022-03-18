@@ -299,7 +299,7 @@ if __name__ == "__main__":
 
     writer = None
     if args.nr == 0:
-        writer = SummaryWriter(args.config)
+        writer = SummaryWriter('runs/' + args.config)
 
     args.global_step = 0
     args.current_epoch = 0
