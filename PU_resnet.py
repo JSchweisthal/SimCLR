@@ -229,6 +229,27 @@ if __name__ == "__main__":
         if args.data_classif == "PU":
             test_dataset.targets = torch.tensor(test_dataset.targets)
             test_dataset.targets = torch.where(torch.isin(test_dataset.targets, torch.tensor([0, 1, 8, 9])), 1, 0)  
+
+    elif args.dataset == "GLAUCOMA":
+        from glaucoma import GLAUCOMA
+        train_dataset = GLAUCOMA(
+            args.dataset_dir,
+            train=True,
+            transform=TransformsSimCLR(size=args.image_size).test_transform,
+        )  
+        if args.data_classif == "PU":
+            train_dataset.labels = torch.tensor(train_dataset.labels)
+            idxs_pos = [i for i in range(len(train_dataset.labels)) if train_dataset.labels[i]==1]
+            idxs_pos_unl = idxs_pos[:int((1-args.PU_ratio)*len(idxs_pos))]
+            idxs_pos_unl = torch.tensor(idxs_pos_unl)
+            train_dataset.labels[idxs_pos_unl] = 0
+
+        test_dataset = GLAUCOMA(
+            args.dataset_dir,
+            train=False,
+            transform=TransformsSimCLR(size=args.image_size).test_transform,
+        )
+
     else:
         raise NotImplementedError
 
@@ -269,7 +290,10 @@ if __name__ == "__main__":
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-5) # learning rate changed!
     # criterion = torch.nn.CrossEntropyLoss()
 
-    prior = ((1-args.PU_ratio)*3/33)/(1-args.PU_ratio*3/33) if args.data_pretrain == "imbalanced" else ((1-args.PU_ratio)*2/5)/(1-args.PU_ratio*2/5)
+    if args.dataset == 'CIFAR10':  
+        prior = ((1-args.PU_ratio)*3/33)/(1-args.PU_ratio*3/33) if args.data_pretrain == "imbalanced" else ((1-args.PU_ratio)*2/5)/(1-args.PU_ratio*2/5)
+    elif args.dataset == 'GLAUCOMA':
+        prior = ((1-args.PU_ratio)*817/2037)/(1-args.PU_ratio*817/2037) 
 
     criterion = OversampledPULoss(prior=prior, prior_prime=0.5, nnPU=True) 
 
