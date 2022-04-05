@@ -350,13 +350,15 @@ if __name__ == "__main__":
     if args.data_classif == 'PU':
         if args.dataset == 'CIFAR10':  
             prior = ((1-args.PU_ratio)*3/33)/(1-args.PU_ratio*3/33) if args.data_pretrain == "imbalanced" else ((1-args.PU_ratio)*2/5)/(1-args.PU_ratio*2/5)
+        elif args.dataset == 'CIFAR100':
+            prior = ((1-args.PU_ratio)*1/10)/(1-args.PU_ratio*1/10)
         elif args.dataset == 'GLAUCOMA':
             prior = ((1-args.PU_ratio)*817/2037)/(1-args.PU_ratio*817/2037) 
 
-
         criterion = OversampledPULoss(prior=prior, prior_prime=0.5, nnPU=True) 
     elif args.data_classif == 'binary':
-        criterion = nn.BCEWithLogitsLoss(pos_weight=torch.tensor(1220/817))
+        if args.dataset == 'GLAUCOMA':
+            criterion = nn.BCEWithLogitsLoss(pos_weight=torch.tensor(1220/817))
 
     print("### Creating features from pre-trained context model ###")
     (train_X, train_y, test_X, test_y) = get_features(
