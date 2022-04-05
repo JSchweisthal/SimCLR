@@ -161,13 +161,13 @@ def main(gpu, args):
                 train_dataset.targets[idxtargets_up] = 0
             train_datasubset_pu = torch.utils.data.Subset(train_dataset, idxs)
 
-        if args.data_pretrain == "2class":
+        if args.data_pretrain == "2class" or args.data_pretrain == "2class_imbalanced" :
             idxs = []
             idxtargets_up = []
             for cls in [args.class_pos, args.class_neg]:
                 idxs_cls = [i for i in range(len(train_dataset.targets)) if train_dataset.targets[i]==cls]
                 if cls == args.class_pos:
-                    if args.data_pretrain == "imbalanced":
+                    if args.data_pretrain == "2class_imbalanced":
                         idxs_cls = idxs_cls[:750]
                     if args.data_classif == "PU":  
                         idxtargets_up_cls = idxs_cls[:int((1-args.PU_ratio)*len(idxs_cls))] # change here 0.2 for any other prop of labeled positive / all positives
