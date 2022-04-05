@@ -234,7 +234,7 @@ def main(gpu, args):
 
     writer = None
     if args.nr == 0:
-        writer = SummaryWriter()
+        writer = SummaryWriter('runs/' + args.config)
 
     args.global_step = 0
     args.current_epoch = 0
@@ -255,7 +255,7 @@ def main(gpu, args):
 
         if args.nr == 0:
             writer.add_scalar("Loss/train", loss_epoch / len(train_loader), epoch)
-            writer.add_scalar("Misc/learning_rate", lr, epoch)
+            # writer.add_scalar("Misc/learning_rate", lr, epoch)
             print(
                 f"Epoch [{epoch}/{args.epochs}]\t Loss: {loss_epoch / len(train_loader)}\t lr: {round(lr, 5)}"
             )
