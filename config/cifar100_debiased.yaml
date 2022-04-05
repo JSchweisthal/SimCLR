@@ -48,7 +48,7 @@ logistic_epochs: 100 #500
 
 # option for full or imbalanced Pu Subset
 data_pretrain: "all" #options: "all", "imbalanced"
-data_classif: "binary" #options: "binary", "PU"
+data_classif: "PU" #options: "binary", "PU"
 # # PU ratio (labeled positives / all positives for binary PU setting)
 PU_ratio: 0.2
 
