@@ -62,4 +62,4 @@ loss_pretrain: "NT_Xent" # not important for debiased main_debiased
 
 ### debiased
 debiased: True
-tau_plus: 0.1
+tau_plus: 0.01
