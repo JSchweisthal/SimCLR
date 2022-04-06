@@ -273,7 +273,7 @@ if __name__ == "__main__":
         train_dataset.targets = torch.where(torch.isin(train_dataset.targets, torch.tensor([0, 1, 8, 9])), 1, 0)
         if args.data_classif == "PU":  
             train_dataset.targets[idxtargets_up] = 0
-        if args.data_pretrain == "imbalanced" or args.data_pretrain == "2class_imbalanced":
+        if "imbalanced" in args.data_pretrain:
             train_datasubset_pu = torch.utils.data.Subset(train_dataset, idxs) 
         
         test_dataset.targets = torch.tensor(test_dataset.targets)
@@ -350,7 +350,7 @@ if __name__ == "__main__":
 
     if args.data_classif == 'PU':
         if args.dataset == 'CIFAR10':  
-            prior = ((1-args.PU_ratio)*3/33)/(1-args.PU_ratio*3/33) if args.data_pretrain == "imbalanced" else ((1-args.PU_ratio)*2/5)/(1-args.PU_ratio*2/5)
+            prior = ((1-args.PU_ratio)*3/33)/(1-args.PU_ratio*3/33) if "imbalanced" in args.data_pretrain else ((1-args.PU_ratio)*2/5)/(1-args.PU_ratio*2/5)
         elif args.dataset == 'CIFAR100':
             prior = ((1-args.PU_ratio)*1/10)/(1-args.PU_ratio*1/10)
         elif args.dataset == 'GLAUCOMA':
