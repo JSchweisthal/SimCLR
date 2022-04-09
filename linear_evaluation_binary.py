@@ -299,8 +299,10 @@ if __name__ == "__main__":
                 train_dataset.targets[idxtargets_up] = 0
             train_datasubset_pu = torch.utils.data.Subset(train_dataset, idxs)
 
+            idxs_test = [i for i in range(len(test_dataset.targets)) if test_dataset.targets[i] in [args.class_pos, args.class_neg]]
             test_dataset.targets = torch.tensor(test_dataset.targets)
             test_dataset.targets = torch.where(torch.isin(test_dataset.targets, torch.tensor([args.class_pos])), 1, 0)
+            test_datasubset = torch.utils.data.Subset(test_dataset, idxs_test)
 
 
 
@@ -329,6 +331,9 @@ if __name__ == "__main__":
     if args.data_pretrain == "all":
             train_datasubset_pu = train_dataset
 
+    if "2class" not in  args.data_pretrain:
+            test_datasubset = test_dataset
+
     train_loader = torch.utils.data.DataLoader(
         train_datasubset_pu, #train_dataset,
         batch_size=args.logistic_batch_size,
@@ -338,7 +343,7 @@ if __name__ == "__main__":
     )
 
     test_loader = torch.utils.data.DataLoader(
-        test_dataset,
+        test_datasubset,
         batch_size=args.logistic_batch_size,
         shuffle=False,
         drop_last=True,
