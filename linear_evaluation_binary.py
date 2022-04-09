@@ -117,7 +117,7 @@ def test(args, loader, model, criterion, optimizer):
             y = y.to(args.device).float()
 
             output_step = torch.flatten(model(x)).detach()
-            loss = criterion(output, y)
+            loss = criterion(output_step, y)
             predicted_step = ((torch.sign(output_step)+1)/2).int()
 
             output = np.append(output, output_step.cpu().numpy())
