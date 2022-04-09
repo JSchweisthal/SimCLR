@@ -132,7 +132,7 @@ def test(args, loader, model, criterion, optimizer):
             # auc_epoch += auc
 
             loss_epoch += loss.item()
-    accuracy_epoch = (predicted == y).sum()/ len(y)
+    accuracy_epoch = (predicted == labels).sum()/ len(labels)
     f1_epoch = f1_score(labels, predicted)
     auc_epoch = roc_auc_score(labels, output)
 
