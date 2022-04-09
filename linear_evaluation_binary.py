@@ -311,13 +311,13 @@ if __name__ == "__main__":
                 train_dataset.targets[idxtargets_up] = 0
             train_datasubset_pu = torch.utils.data.Subset(train_dataset, idxs)
 
-            # idxs_test = [i for i in range(len(test_dataset.targets)) if test_dataset.targets[i] in [args.class_pos, args.class_neg]]
+            idxs_test = [i for i in range(len(test_dataset.targets)) if test_dataset.targets[i] in [args.class_pos, args.class_neg]]
 
-            idxs_test = [i for i in range(len(test_dataset.targets)) if test_dataset.targets[i] == args.class_pos]
-            idxs_test = idxs_test[:250]
-            idxs_test_neg = [i for i in range(len(test_dataset.targets)) if test_dataset.targets[i] == args.class_neg]
-            idxs_test.extend(idxs_test_neg)
-            idxs_test.sort()
+            # idxs_test = [i for i in range(len(test_dataset.targets)) if test_dataset.targets[i] == args.class_pos]
+            # idxs_test = idxs_test[:250]
+            # idxs_test_neg = [i for i in range(len(test_dataset.targets)) if test_dataset.targets[i] == args.class_neg]
+            # idxs_test.extend(idxs_test_neg)
+            # idxs_test.sort()
             
 
             test_dataset.targets = torch.tensor(test_dataset.targets)
