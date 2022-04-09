@@ -252,7 +252,7 @@ if __name__ == "__main__":
             transform=TransformsSimCLR(size=args.image_size).test_transform,
         )
 
-        if args.data_pretrain == "imbalanced" and "2class" not in args.data_pretrain:
+        if args.data_pretrain == "imbalanced":
             idxs = []
             idxtargets_up = []
             for cls in range(10):
