@@ -434,12 +434,12 @@ if __name__ == "__main__":
             args, arr_test_loader, model, criterion, optimizer
         )
         print(
-            f"[TEST]:\t Loss: {loss_epoch / len(arr_test_loader)}\t Accuracy: {accuracy_epoch / len(arr_test_loader)}\t F1: {f1_epoch / len(arr_test_loader)}\t AUC: {auc_epoch / len(arr_test_loader)}"
+            f"[TEST]:\t Loss: {loss_epoch / len(arr_test_loader)}\t Accuracy: {accuracy_epoch}\t F1: {f1_epoch}\t AUC: {auc_epoch}"
         )
     # final testing
     loss_epoch, accuracy_epoch, f1_epoch, auc_epoch  = test(
         args, arr_test_loader, model, criterion, optimizer
     )
     print(
-        f"[FINAL]\t Loss: {loss_epoch / len(arr_test_loader)}\t Accuracy: {accuracy_epoch / len(arr_test_loader)}\t F1: {f1_epoch / len(arr_test_loader)}\t AUC: {auc_epoch / len(arr_test_loader)}"
+        f"[FINAL]\t Loss: {loss_epoch / len(arr_test_loader)}\t Accuracy: {accuracy_epoch}\t F1: {f1_epoch}\t AUC: {auc_epoch}"
     )
