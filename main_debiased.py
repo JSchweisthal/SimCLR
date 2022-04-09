@@ -173,7 +173,7 @@ def main(gpu, args):
                         idxtargets_up_cls = idxs_cls[:int((1-args.PU_ratio)*len(idxs_cls))] # change here 0.2 for any other prop of labeled positive / all positives
                         idxtargets_up.extend(idxtargets_up_cls)
                 idxs.extend(idxs_cls)
-                idxs.sort()
+            idxs.sort()
             idxtargets_up.sort()        
             idxtargets_up = torch.tensor(idxtargets_up)
 
