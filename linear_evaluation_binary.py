@@ -12,7 +12,7 @@ from simclr.modules.transformations import TransformsSimCLR
 
 from utils import yaml_config_hook
 
-from sklearn.metrics import f1_score, roc_auc_score
+from sklearn.metrics import confusion_matrix, f1_score, roc_auc_score
 
 
 def inference(loader, simclr_model, device):
@@ -135,6 +135,10 @@ def test(args, loader, model, criterion, optimizer):
     accuracy_epoch = (predicted == labels).sum()/ len(labels)
     f1_epoch = f1_score(labels, predicted)
     auc_epoch = roc_auc_score(labels, output)
+
+    conf_mat = confusion_matrix(labels, predicted).ravel()
+    print(f"TN: {conf_mat[0]}, FP: {conf_mat[1]}, FN: {conf_mat[2]}, TP: {conf_mat[3]}")
+
 
     return loss_epoch, accuracy_epoch, f1_epoch, auc_epoch
 
