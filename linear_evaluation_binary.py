@@ -100,10 +100,15 @@ def train(args, loader, model, criterion, optimizer):
 
 def test(args, loader, model, criterion, optimizer):
     loss_epoch = 0
-    accuracy_epoch = 0
-    f1_epoch = 0
-    auc_epoch= 0
+    # accuracy_epoch = 0
+    # f1_epoch = 0
+    # auc_epoch= 0
     model.eval()
+    
+    output = np.array([])
+    predicted = np.array([])
+    labels = np.array([])
+
     for step, (x, y) in enumerate(loader):
         model.zero_grad()
         with torch.no_grad():
@@ -111,18 +116,25 @@ def test(args, loader, model, criterion, optimizer):
             x = x.to(args.device)
             y = y.to(args.device).float()
 
-            output = torch.flatten(model(x)).detach()
+            output_step = torch.flatten(model(x)).detach()
             loss = criterion(output, y)
+            predicted_step = ((torch.sign(output_step)+1)/2).int()
 
-            predicted = ((torch.sign(output)+1)/2).int()
-            acc = (predicted == y).sum().item() / y.size(0)
-            accuracy_epoch += acc
-            f1 = f1_score(y.cpu().numpy(), predicted.cpu().numpy())
-            f1_epoch += f1
-            auc = roc_auc_score(y.cpu().numpy(), output.cpu().numpy())
-            auc_epoch += auc
+            output = np.append(output, output_step.cpu().numpy())
+            predicted = np.append(predicted, predicted_step.cpu().numpy())
+            labels = np.append(labels, y.cpu().numpy())
+
+            # acc = (predicted == y).sum().item() / y.size(0)
+            # accuracy_epoch += acc
+            # f1 = f1_score(y.cpu().numpy(), predicted.cpu().numpy())
+            # f1_epoch += f1
+            # auc = roc_auc_score(y.cpu().numpy(), output.cpu().numpy())
+            # auc_epoch += auc
 
             loss_epoch += loss.item()
+    accuracy_epoch = (predicted == y).sum()/ len(y)
+    f1_epoch = f1_score(labels, predicted)
+    auc_epoch = roc_auc_score(labels, output)
 
     return loss_epoch, accuracy_epoch, f1_epoch, auc_epoch
 
