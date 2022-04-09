@@ -289,7 +289,7 @@ def main(gpu, args):
             idx_unl = [i for i in idxs if (train_dataset.targets[i]==0)]
 
         elif args.dataset=='CIFAR100':
-            idxs = list(range(len(train_dataset.labels)))
+            idxs = list(range(len(train_dataset.targets)))
             idx_pos = [i for i in idxs if (train_dataset.targets[i]==1)]
             idx_unl = [i for i in idxs if (train_dataset.targets[i]==0)]
         elif args.dataset=='GLAUCOMA':
