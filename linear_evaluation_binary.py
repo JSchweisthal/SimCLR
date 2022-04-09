@@ -314,7 +314,7 @@ if __name__ == "__main__":
             # idxs_test = [i for i in range(len(test_dataset.targets)) if test_dataset.targets[i] in [args.class_pos, args.class_neg]]
 
             idxs_test = [i for i in range(len(test_dataset.targets)) if test_dataset.targets[i] == args.class_pos]
-            idxs_test = idxs_test[:250]
+            idxs_test = idxs_test[:100]
             idxs_test_neg = [i for i in range(len(test_dataset.targets)) if test_dataset.targets[i] == args.class_neg]
             idxs_test.extend(idxs_test_neg)
             idxs_test.sort()
