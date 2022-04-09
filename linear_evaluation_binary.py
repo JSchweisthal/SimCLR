@@ -370,7 +370,7 @@ if __name__ == "__main__":
         test_datasubset,
         batch_size=args.logistic_batch_size,
         shuffle=False,
-        drop_last=True,
+        drop_last=False,
         num_workers=args.workers,
     )
 
