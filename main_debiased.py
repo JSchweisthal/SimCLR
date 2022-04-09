@@ -208,7 +208,7 @@ def main(gpu, args):
 
     writer = None
     if args.nr == 0:
-        writer = SummaryWriter('runs/' + args.config)
+        writer = SummaryWriter('runs_final/' + args.config)
 
     args.global_step = 0
     args.current_epoch = 0
