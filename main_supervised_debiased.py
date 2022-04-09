@@ -196,23 +196,23 @@ def main(gpu, args):
             download=True,
             transform=TransformsSimCLR(size=args.image_size),
         )
-        if args.data_classif == "PU":
-            idxtargets_up = []
-            for cls in range(100):
-                idxs_cls = [i for i in range(len(train_dataset.targets)) if train_dataset.targets[i]==cls]
-                # vehicles_1 = ["bicycle", "bus", "motorcycle", "pickup_truck", "train"]
-                # vehicles_2 = ["lawn_mower", "rocket", "streetcar", "tank", "tractor"]
-                if cls in [8, 13, 48, 58, 90, 41, 69, 81, 85, 89]:
-                    idxtargets_up_cls = idxs_cls[:int((1-args.PU_ratio)*len(idxs_cls))] # change here 0.2 for any other prop of labeled positive / all positives
-                    idxtargets_up.extend(idxtargets_up_cls)
-                    idxtargets_up.sort()
-            idxtargets_up = torch.tensor(idxtargets_up)
+        
+        idxtargets_up = []
+        for cls in range(100):
+            idxs_cls = [i for i in range(len(train_dataset.targets)) if train_dataset.targets[i]==cls]
+            # vehicles_1 = ["bicycle", "bus", "motorcycle", "pickup_truck", "train"]
+            # vehicles_2 = ["lawn_mower", "rocket", "streetcar", "tank", "tractor"]
+            if cls in [8, 13, 48, 58, 90, 41, 69, 81, 85, 89]:
+                idxtargets_up_cls = idxs_cls[:int((1-args.PU_ratio)*len(idxs_cls))] # change here 0.2 for any other prop of labeled positive / all positives
+                idxtargets_up.extend(idxtargets_up_cls)
+        idxtargets_up.sort()
+        idxtargets_up = torch.tensor(idxtargets_up)
 
         train_dataset.targets = torch.tensor(train_dataset.targets)
         train_dataset.targets = torch.where(torch.isin(train_dataset.targets, torch.tensor([8, 13, 48, 58, 90, 41, 69, 81, 85, 89])), 1, 0)  
 
-        if args.data_classif == "PU":
-            train_dataset.targets[idxtargets_up] = 0
+        
+        train_dataset.targets[idxtargets_up] = 0
 
     elif args.dataset == "CIFAR10":
         train_dataset = torchvision.datasets.CIFAR10(
@@ -222,7 +222,7 @@ def main(gpu, args):
         )
         
         # just take 750 instead of 5000 of the 4 vehicle (positive) classes --> P:U ratio 3k : 30k
-        if args.data_pretrain == "imbalanced" or args.data_classif == "PU" and "2class" not in args.data_pretrain:
+        if args.data_pretrain == "imbalanced" and "2class" not in args.data_pretrain:
             idxs = []
             idxtargets_up = []
             for cls in range(10):
@@ -230,19 +230,17 @@ def main(gpu, args):
                 if cls in [0, 1, 8, 9]: # vehicle classes
                     if args.data_pretrain == "imbalanced":
                         idxs_cls = idxs_cls[:750]
-                    if args.data_classif == "PU":  
-                        idxtargets_up_cls = idxs_cls[:int((1-args.PU_ratio)*len(idxs_cls))] # change here 0.2 for any other prop of labeled positive / all positives
-                idxs.extend(idxs_cls)
-                idxs.sort()
-                if args.data_classif == "PU":  
+                    idxtargets_up_cls = idxs_cls[:int((1-args.PU_ratio)*len(idxs_cls))] # change here 0.2 for any other prop of labeled positive / all positives
                     idxtargets_up.extend(idxtargets_up_cls)
-                    idxtargets_up.sort()
+                idxs.extend(idxs_cls)
+            idxs.sort()             
+            idxtargets_up.sort()
             idxtargets_up = torch.tensor(idxtargets_up)
 
             train_dataset.targets = torch.tensor(train_dataset.targets)
-            if args.data_classif == "PU":  
-                train_dataset.targets = torch.where(torch.isin(train_dataset.targets, torch.tensor([0, 1, 8, 9])), 1, 0)  
-                train_dataset.targets[idxtargets_up] = 0
+            train_dataset.targets = torch.where(torch.isin(train_dataset.targets, torch.tensor([0, 1, 8, 9])), 1, 0)  
+            train_dataset.targets[idxtargets_up] = 0
+            
             train_datasubset_pu = torch.utils.data.Subset(train_dataset, idxs)
 
         elif "2class" in args.data_pretrain :
@@ -252,10 +250,9 @@ def main(gpu, args):
                 idxs_cls = [i for i in range(len(train_dataset.targets)) if train_dataset.targets[i]==cls]
                 if cls == args.class_pos:
                     if args.data_pretrain == "2class_imbalanced":
-                        idxs_cls = idxs_cls[:750]
-                    if args.data_classif == "PU":  
-                        idxtargets_up_cls = idxs_cls[:int((1-args.PU_ratio)*len(idxs_cls))] # change here 0.2 for any other prop of labeled positive / all positives
-                        idxtargets_up.extend(idxtargets_up_cls)
+                        idxs_cls = idxs_cls[:750]  
+                    idxtargets_up_cls = idxs_cls[:int((1-args.PU_ratio)*len(idxs_cls))] # change here 0.2 for any other prop of labeled positive / all positives
+                    idxtargets_up.extend(idxtargets_up_cls)
                 idxs.extend(idxs_cls)
             idxs.sort()
             idxtargets_up.sort()        
@@ -263,9 +260,8 @@ def main(gpu, args):
 
             train_dataset.targets = torch.tensor(train_dataset.targets)
             train_dataset.targets = torch.where(torch.isin(train_dataset.targets, torch.tensor([args.class_pos])), 1, 0)  
+            train_dataset.targets[idxtargets_up] = 0
 
-            if args.data_classif == "PU":  
-                train_dataset.targets[idxtargets_up] = 0
             train_datasubset_pu = torch.utils.data.Subset(train_dataset, idxs)
 
 
@@ -275,49 +271,50 @@ def main(gpu, args):
             args.dataset_dir,
             transform=TransformsSimCLR(size=args.image_size),
         )
-        if args.data_classif == "PU":
-            train_dataset.labels = torch.tensor(train_dataset.labels)
-            idxs_pos = [i for i in range(len(train_dataset.labels)) if train_dataset.labels[i]==1]
-            idxs_pos_unl = idxs_pos[:int((1-args.PU_ratio)*len(idxs_pos))]
-            idxs_pos_unl = torch.tensor(idxs_pos_unl)
-            train_dataset.labels[idxs_pos_unl] = 0
+        train_dataset.labels = torch.tensor(train_dataset.labels)
+        idxs_pos = [i for i in range(len(train_dataset.labels)) if train_dataset.labels[i]==1]
+        idxs_pos_unl = idxs_pos[:int((1-args.PU_ratio)*len(idxs_pos))]
+        idxs_pos_unl = torch.tensor(idxs_pos_unl)
+        train_dataset.labels[idxs_pos_unl] = 0
 
     else:
         raise NotImplementedError
 
-    if args.data_classif == "PU":
-        if args.dataset=='CIFAR10':
-            idx_pos = [i for i in idxs if (train_dataset.targets[i]==1)]
-            idx_unl = [i for i in idxs if (train_dataset.targets[i]==0)]
+    if args.dataset=='CIFAR10':
+        idx_pos = [i for i in idxs if (train_dataset.targets[i]==1)]
+        idx_unl = [i for i in idxs if (train_dataset.targets[i]==0)]
 
-        elif args.dataset=='CIFAR100':
-            idxs = list(range(len(train_dataset.targets)))
-            idx_pos = [i for i in idxs if (train_dataset.targets[i]==1)]
-            idx_unl = [i for i in idxs if (train_dataset.targets[i]==0)]
-        elif args.dataset=='GLAUCOMA':
-            idxs = list(range(len(train_dataset.labels)))
-            idx_pos = [i for i in idxs if (train_dataset.labels[i]==1)]
-            idx_unl = [i for i in idxs if (train_dataset.labels[i]==0)]
+    elif args.dataset=='CIFAR100':
+        idxs = list(range(len(train_dataset.targets)))
+        idx_pos = [i for i in idxs if (train_dataset.targets[i]==1)]
+        idx_unl = [i for i in idxs if (train_dataset.targets[i]==0)]
+    elif args.dataset=='GLAUCOMA':
+        idxs = list(range(len(train_dataset.labels)))
+        idx_pos = [i for i in idxs if (train_dataset.labels[i]==1)]
+        idx_unl = [i for i in idxs if (train_dataset.labels[i]==0)]
 
-        train_datasubset_pos = torch.utils.data.Subset(train_dataset, idx_pos)
-        train_datasubset_unl = torch.utils.data.Subset(train_dataset, idx_unl)
+    train_datasubset_pos = torch.utils.data.Subset(train_dataset, idx_pos)
+    train_datasubset_unl = torch.utils.data.Subset(train_dataset, idx_unl)
 
-        train_loader_pos = torch.utils.data.DataLoader(
-            train_datasubset_pos, #train_dataset,
-            batch_size= int(np.ceil(args.batch_size * len(idx_pos) / (len(idx_pos) + len(idx_unl)))),
-            shuffle=True,
-            drop_last=True,
-            num_workers=args.workers,
-            sampler=None)
-        train_loader_unl = torch.utils.data.DataLoader(
-            train_datasubset_unl, #train_dataset,
-            batch_size=int(np.floor(args.batch_size * len(idx_unl) / (len(idx_pos) + len(idx_unl)))),
-            shuffle=True,
-            drop_last=True,
-            num_workers=args.workers,
-            sampler=None)
+    train_loader_pos = torch.utils.data.DataLoader(
+        train_datasubset_pos, #train_dataset,
+        batch_size= int(np.ceil(args.batch_size * len(idx_pos) / (len(idx_pos) + len(idx_unl)))),
+        shuffle=True,
+        drop_last=True,
+        num_workers=args.workers,
+        sampler=None)
+    train_loader_unl = torch.utils.data.DataLoader(
+        train_datasubset_unl, #train_dataset,
+        batch_size=int(np.floor(args.batch_size * len(idx_unl) / (len(idx_pos) + len(idx_unl)))),
+        shuffle=True,
+        drop_last=True,
+        num_workers=args.workers,
+        sampler=None)
 
-        train_loader = (train_loader_pos, train_loader_unl)
+    train_loader = (train_loader_pos, train_loader_unl)
+
+    if args.data_classif != 'PU':
+        raise ValueError('Data Pretrain must be PU!')
 
     # if args.data_pretrain == "all":
     #         train_datasubset_pu = train_dataset

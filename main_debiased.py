@@ -144,10 +144,8 @@ def main(gpu, args):
                 if cls == args.class_pos:
                     if args.data_pretrain == "2class_imbalanced":
                         idxs_cls = idxs_cls[:750]
-                    idxs.extend(idxs_cls)
+                idxs.extend(idxs_cls)
             idxs.sort()
-            idxtargets_up.sort()        
-            idxtargets_up = torch.tensor(idxtargets_up)
 
             train_datasubset_pu = torch.utils.data.Subset(train_dataset, idxs)
 
