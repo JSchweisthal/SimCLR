@@ -252,14 +252,13 @@ if __name__ == "__main__":
             transform=TransformsSimCLR(size=args.image_size).test_transform,
         )
 
-        if args.data_pretrain == "imbalanced" or args.data_classif == "PU" and "2class" not in args.data_pretrain:
+        if args.data_pretrain == "imbalanced" and "2class" not in args.data_pretrain:
             idxs = []
             idxtargets_up = []
             for cls in range(10):
                 idxs_cls = [i for i in range(len(train_dataset.targets)) if train_dataset.targets[i]==cls]
                 if cls in [0, 1, 8, 9]:
-                    if args.data_pretrain == "imbalanced":
-                        idxs_cls = idxs_cls[:750]
+                    idxs_cls = idxs_cls[:750]
                     if args.data_classif == "PU":  
                         idxtargets_up_cls = idxs_cls[:int((1-args.PU_ratio)*len(idxs_cls))] # change here 0.2 for any other prop of labeled positive / all positives
                 idxs.extend(idxs_cls)
