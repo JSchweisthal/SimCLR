@@ -57,7 +57,7 @@ def get_mask_classes(batch_size, labels):
 
     return mat
 
-def train(args, train_loader, model, criterion, optimizer, writer):
+def train(args, train_loader, model, optimizer, writer):
     loss_epoch = 0
 
     train_loader_pos = iter(train_loader[0])
@@ -349,16 +349,6 @@ def main(gpu, args):
 
     # optimizer / loss
     optimizer, scheduler = load_optimizer(args, model)
-    if args.loss_pretrain == "NT_Xent":
-        criterion = NT_Xent(args.batch_size, args.temperature, args.world_size)
-    elif args.loss_pretrain == "MedianTripletHead":
-        criterion = MedianTripletHead()
-    elif args.loss_pretrain == "SmoothTripletHead":
-        criterion = SmoothTripletHead(k=args.batch_size-1)
-    elif args.loss_pretrain == "TripletNNPULoss":
-        criterion = TripletNNPULoss(prior=args.prior, k = args.batch_size//2, C=args.C)
-    elif args.loss_pretrain == "HeadNNPU":
-        criterion = HeadNNPU(prior=args.prior, latent_size=args.projection_dim)
 
     # DDP / DP
     if args.dataparallel:
@@ -382,7 +372,7 @@ def main(gpu, args):
         #     train_sampler.set_epoch(epoch)
         
         lr = optimizer.param_groups[0]["lr"]
-        loss_epoch = train(args, train_loader, model, criterion, optimizer, writer)
+        loss_epoch = train(args, train_loader, model, optimizer, writer)
 
         if args.nr == 0 and scheduler:
             scheduler.step()

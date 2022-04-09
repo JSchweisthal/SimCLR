@@ -55,7 +55,7 @@ PU_ratio: 0.2
 ############################################
 # select pretrain-loss function specified in simclr/modules/new_loss.py
 
-loss_pretrain: "NT_Xent" # not important for debiased main_debiased
+# loss_pretrain: "NT_Xent" # not important for debiased main_debiased
 # loss params
 # prior: 0.1
 # C: -1.
