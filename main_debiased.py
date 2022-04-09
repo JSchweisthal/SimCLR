@@ -116,20 +116,6 @@ def main(gpu, args):
             download=True,
             transform=TransformsSimCLR(size=args.image_size),
         )
-        if args.data_classif == "PU":
-            idxtargets_up = []
-            for cls in range(100):
-                idxs_cls = [i for i in range(len(train_dataset.targets)) if train_dataset.targets[i]==cls]
-                # vehicles_1 = ["bicycle", "bus", "motorcycle", "pickup_truck", "train"]
-                # vehicles_2 = ["lawn_mower", "rocket", "streetcar", "tank", "tractor"]
-                if cls in [8, 13, 48, 58, 90, 41, 69, 81, 85, 89]:
-                    idxtargets_up_cls = idxs_cls[:int((1-args.PU_ratio)*len(idxs_cls))] # change here 0.2 for any other prop of labeled positive / all positives
-                    idxtargets_up.extend(idxtargets_up_cls)
-                    idxtargets_up.sort()
-            idxtargets_up = torch.tensor(idxtargets_up)
-
-            train_dataset.targets = torch.tensor(train_dataset.targets)
-            train_dataset.targets[idxtargets_up] = 0
 
     elif args.dataset == "CIFAR10":
         train_dataset = torchvision.datasets.CIFAR10(
@@ -139,47 +125,30 @@ def main(gpu, args):
         )
         
         # just take 750 instead of 5000 of the 4 vehicle (positive) classes --> P:U ratio 3k : 30k
-        if args.data_pretrain == "imbalanced" or args.data_classif == "PU" and "2class" not in args.data_pretrain:
+        if args.data_pretrain == "imbalanced" and "2class" not in args.data_pretrain:
             idxs = []
-            idxtargets_up = []
             for cls in range(10):
                 idxs_cls = [i for i in range(len(train_dataset.targets)) if train_dataset.targets[i]==cls]
                 if cls in [0, 1, 8, 9]:
                     if args.data_pretrain == "imbalanced":
                         idxs_cls = idxs_cls[:750]
-                    if args.data_classif == "PU":  
-                        idxtargets_up_cls = idxs_cls[:int((1-args.PU_ratio)*len(idxs_cls))] # change here 0.2 for any other prop of labeled positive / all positives
                 idxs.extend(idxs_cls)
                 idxs.sort()
-                if args.data_classif == "PU":  
-                    idxtargets_up.extend(idxtargets_up_cls)
-                    idxtargets_up.sort()
-            idxtargets_up = torch.tensor(idxtargets_up)
 
-            train_dataset.targets = torch.tensor(train_dataset.targets)
-            if args.data_classif == "PU":  
-                train_dataset.targets[idxtargets_up] = 0
             train_datasubset_pu = torch.utils.data.Subset(train_dataset, idxs)
 
         elif "2class" in args.data_pretrain :
             idxs = []
-            idxtargets_up = []
             for cls in [args.class_pos, args.class_neg]:
                 idxs_cls = [i for i in range(len(train_dataset.targets)) if train_dataset.targets[i]==cls]
                 if cls == args.class_pos:
                     if args.data_pretrain == "2class_imbalanced":
                         idxs_cls = idxs_cls[:750]
-                    if args.data_classif == "PU":  
-                        idxtargets_up_cls = idxs_cls[:int((1-args.PU_ratio)*len(idxs_cls))] # change here 0.2 for any other prop of labeled positive / all positives
-                        idxtargets_up.extend(idxtargets_up_cls)
-                idxs.extend(idxs_cls)
+                    idxs.extend(idxs_cls)
             idxs.sort()
             idxtargets_up.sort()        
             idxtargets_up = torch.tensor(idxtargets_up)
 
-            train_dataset.targets = torch.tensor(train_dataset.targets)
-            if args.data_classif == "PU":  
-                train_dataset.targets[idxtargets_up] = 0
             train_datasubset_pu = torch.utils.data.Subset(train_dataset, idxs)
 
 
@@ -189,12 +158,6 @@ def main(gpu, args):
             args.dataset_dir,
             transform=TransformsSimCLR(size=args.image_size),
         )
-        if args.data_classif == "PU":
-            train_dataset.labels = torch.tensor(train_dataset.labels)
-            idxs_pos = [i for i in range(len(train_dataset.labels)) if train_dataset.labels[i]==1]
-            idxs_pos_unl = idxs_pos[:int((1-args.PU_ratio)*len(idxs_pos))]
-            idxs_pos_unl = torch.tensor(idxs_pos_unl)
-            train_dataset.labels[idxs_pos_unl] = 0
 
     else:
         raise NotImplementedError

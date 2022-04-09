@@ -198,7 +198,7 @@ def main(gpu, args):
         )
         if args.data_classif == "PU":
             idxtargets_up = []
-            for cls in range(10):
+            for cls in range(100):
                 idxs_cls = [i for i in range(len(train_dataset.targets)) if train_dataset.targets[i]==cls]
                 # vehicles_1 = ["bicycle", "bus", "motorcycle", "pickup_truck", "train"]
                 # vehicles_2 = ["lawn_mower", "rocket", "streetcar", "tank", "tractor"]
@@ -227,7 +227,7 @@ def main(gpu, args):
             idxtargets_up = []
             for cls in range(10):
                 idxs_cls = [i for i in range(len(train_dataset.targets)) if train_dataset.targets[i]==cls]
-                if cls in [0, 1, 8, 9]:
+                if cls in [0, 1, 8, 9]: # vehicle classes
                     if args.data_pretrain == "imbalanced":
                         idxs_cls = idxs_cls[:750]
                     if args.data_classif == "PU":  
@@ -263,7 +263,7 @@ def main(gpu, args):
 
             train_dataset.targets = torch.tensor(train_dataset.targets)
             train_dataset.targets = torch.where(torch.isin(train_dataset.targets, torch.tensor([args.class_pos])), 1, 0)  
-            
+
             if args.data_classif == "PU":  
                 train_dataset.targets[idxtargets_up] = 0
             train_datasubset_pu = torch.utils.data.Subset(train_dataset, idxs)

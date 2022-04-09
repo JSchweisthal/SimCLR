@@ -216,7 +216,7 @@ if __name__ == "__main__":
         )
         if args.data_classif == "PU":
             idxtargets_up = []
-            for cls in range(10):
+            for cls in range(100):
                 idxs_cls = [i for i in range(len(train_dataset.targets)) if train_dataset.targets[i]==cls]
                 # vehicles_1 = ["bicycle", "bus", "motorcycle", "pickup_truck", "train"]
                 # vehicles_2 = ["lawn_mower", "rocket", "streetcar", "tank", "tractor"]
