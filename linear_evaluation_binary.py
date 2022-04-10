@@ -285,6 +285,7 @@ if __name__ == "__main__":
             idxtargets_up = torch.tensor(idxtargets_up)
 
             train_dataset.targets = torch.tensor(train_dataset.targets)
+            train_dataset.targets = torch.where(torch.isin(train_dataset.targets, torch.tensor([0, 1, 8, 9])), 1, 0)
             if args.data_classif == "PU":  
                 train_dataset.targets[idxtargets_up] = 0
             train_datasubset_pu = torch.utils.data.Subset(train_dataset, idxs)
@@ -414,6 +415,8 @@ if __name__ == "__main__":
     elif args.data_classif == 'binary':
         if args.dataset == 'GLAUCOMA':
             criterion = nn.BCEWithLogitsLoss(pos_weight=torch.tensor(1220/817))
+        else:
+            criterion = nn.BCEWithLogitsLoss()
 
     print("### Creating features from pre-trained context model ###")
     (train_X, train_y, test_X, test_y) = get_features(
