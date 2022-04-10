@@ -16,7 +16,7 @@ from model import load_optimizer, save_model
 
 from utils import yaml_config_hook
 
-from sklearn.metrics import f1_score, roc_auc_score
+from sklearn.metrics import confusion_matrix, f1_score, roc_auc_score
 
 
 def train(args, loader, model, criterion, optimizer):
@@ -59,10 +59,15 @@ def train(args, loader, model, criterion, optimizer):
 
 def test(args, loader, model, criterion, optimizer):
     loss_epoch = 0
-    accuracy_epoch = 0
-    f1_epoch = 0
-    auc_epoch = 0
+    # accuracy_epoch = 0
+    # f1_epoch = 0
+    # auc_epoch= 0
     model.eval()
+    
+    output = np.array([])
+    predicted = np.array([])
+    labels = np.array([])
+
     for step, (x, y) in enumerate(loader):
         model.zero_grad()
         with torch.no_grad():
@@ -70,18 +75,29 @@ def test(args, loader, model, criterion, optimizer):
             x = x.to(args.device)
             y = y.to(args.device).float()
 
-            output = torch.flatten(model(x)).detach()
-            loss = criterion(output, y)
+            output_step = torch.flatten(model(x)).detach()
+            loss = criterion(output_step, y)
+            predicted_step = ((torch.sign(output_step)+1)/2).int()
 
-            predicted = ((torch.sign(output)+1)/2).int()
-            acc = (predicted == y).sum().item() / y.size(0)
-            accuracy_epoch += acc
-            f1 = f1_score(y.cpu().numpy(), predicted.cpu().numpy())
-            f1_epoch += f1
-            auc = roc_auc_score(y.cpu().numpy(), output.cpu().numpy())
-            auc_epoch += auc
+            output = np.append(output, output_step.cpu().numpy())
+            predicted = np.append(predicted, predicted_step.cpu().numpy())
+            labels = np.append(labels, y.cpu().numpy())
+
+            # acc = (predicted == y).sum().item() / y.size(0)
+            # accuracy_epoch += acc
+            # f1 = f1_score(y.cpu().numpy(), predicted.cpu().numpy())
+            # f1_epoch += f1
+            # auc = roc_auc_score(y.cpu().numpy(), output.cpu().numpy())
+            # auc_epoch += auc
 
             loss_epoch += loss.item()
+    accuracy_epoch = (predicted == labels).sum()/ len(labels)
+    f1_epoch = f1_score(labels, predicted)
+    auc_epoch = roc_auc_score(labels, output)
+
+    conf_mat = confusion_matrix(labels, predicted).ravel()
+    print(f"TN: {conf_mat[0]}, FP: {conf_mat[1]}, FN: {conf_mat[2]}, TP: {conf_mat[3]}")
+
 
     return loss_epoch, accuracy_epoch, f1_epoch, auc_epoch
 
@@ -176,19 +192,26 @@ if __name__ == "__main__":
             download=True,
             transform=TransformsSimCLR(size=args.image_size).test_transform,
         )
-        if args.data_pretrain == "imbalanced":
-            idxs = []
+        if args.data_classif == "PU":
             idxtargets_up = []
             for cls in range(100):
                 idxs_cls = [i for i in range(len(train_dataset.targets)) if train_dataset.targets[i]==cls]
-                if cls not in [23]: # cloud, keep this size and shrink all other classes to 20 %
-                    if args.data_pretrain == "imbalanced":
-                        idxs_cls = idxs_cls[:int(len(idxs_cls) * 0.2)]
-                idxs.extend(idxs_cls)
-                idxs.sort()
+                # vehicles_1 = ["bicycle", "bus", "motorcycle", "pickup_truck", "train"]
+                # vehicles_2 = ["lawn_mower", "rocket", "streetcar", "tank", "tractor"]
+                if cls in [8, 13, 48, 58, 90, 41, 69, 81, 85, 89]:
+                    idxtargets_up_cls = idxs_cls[:int((1-args.PU_ratio)*len(idxs_cls))] # change here 0.2 for any other prop of labeled positive / all positives
+                    idxtargets_up.extend(idxtargets_up_cls)
+                    idxtargets_up.sort()
             idxtargets_up = torch.tensor(idxtargets_up)
-            train_dataset.targets = torch.tensor(train_dataset.targets)
-            train_datasubset_pu = torch.utils.data.Subset(train_dataset, idxs)
+
+        train_dataset.targets = torch.tensor(train_dataset.targets)
+        train_dataset.targets = torch.where(torch.isin(train_dataset.targets, torch.tensor([8, 13, 48, 58, 90, 41, 69, 81, 85, 89])), 1, 0)  
+
+        if args.data_classif == "PU":
+            train_dataset.targets[idxtargets_up] = 0
+
+        test_dataset.targets = torch.tensor(test_dataset.targets)
+        test_dataset.targets = torch.where(torch.isin(test_dataset.targets, torch.tensor([8, 13, 48, 58, 90, 41, 69, 81, 85, 89])), 1, 0)
     elif args.dataset == "CIFAR10":
         train_dataset = torchvision.datasets.CIFAR10(
             args.dataset_dir,
@@ -203,14 +226,13 @@ if __name__ == "__main__":
             transform=TransformsSimCLR(size=args.image_size).test_transform,
         )
 
-        if args.data_pretrain == "imbalanced" or args.data_classif == "PU":
+        if args.data_pretrain == "imbalanced":
             idxs = []
             idxtargets_up = []
             for cls in range(10):
                 idxs_cls = [i for i in range(len(train_dataset.targets)) if train_dataset.targets[i]==cls]
                 if cls in [0, 1, 8, 9]:
-                    if args.data_pretrain == "imbalanced":
-                        idxs_cls = idxs_cls[:750]
+                    idxs_cls = idxs_cls[:750]
                     if args.data_classif == "PU":  
                         idxtargets_up_cls = idxs_cls[:int((1-args.PU_ratio)*len(idxs_cls))] # change here 0.2 for any other prop of labeled positive / all positives
                 idxs.extend(idxs_cls)
@@ -221,14 +243,50 @@ if __name__ == "__main__":
             idxtargets_up = torch.tensor(idxtargets_up)
 
             train_dataset.targets = torch.tensor(train_dataset.targets)
-            if args.data_classif == "PU":
-                train_dataset.targets = torch.where(torch.isin(train_dataset.targets, torch.tensor([0, 1, 8, 9])), 1, 0)  
+            train_dataset.targets = torch.where(torch.isin(train_dataset.targets, torch.tensor([0, 1, 8, 9])), 1, 0)
+            if args.data_classif == "PU":  
                 train_dataset.targets[idxtargets_up] = 0
-            train_datasubset_pu = torch.utils.data.Subset(train_dataset, idxs) 
-        
-        if args.data_classif == "PU":
+            train_datasubset_pu = torch.utils.data.Subset(train_dataset, idxs)
+
             test_dataset.targets = torch.tensor(test_dataset.targets)
-            test_dataset.targets = torch.where(torch.isin(test_dataset.targets, torch.tensor([0, 1, 8, 9])), 1, 0)  
+            test_dataset.targets = torch.where(torch.isin(test_dataset.targets, torch.tensor([0, 1, 8, 9])), 1, 0)
+
+        elif "2class" in args.data_pretrain :
+            idxs = []
+            idxtargets_up = []
+            for cls in [args.class_pos, args.class_neg]:
+                idxs_cls = [i for i in range(len(train_dataset.targets)) if train_dataset.targets[i]==cls]
+                if cls == args.class_pos:
+                    if args.data_pretrain == "2class_imbalanced":
+                        idxs_cls = idxs_cls[:750]
+                    if args.data_classif == "PU":  
+                        idxtargets_up_cls = idxs_cls[:int((1-args.PU_ratio)*len(idxs_cls))] # change here 0.2 for any other prop of labeled positive / all positives
+                        idxtargets_up.extend(idxtargets_up_cls)
+                idxs.extend(idxs_cls)
+            idxs.sort()
+            idxtargets_up.sort()        
+            idxtargets_up = torch.tensor(idxtargets_up)
+
+            train_dataset.targets = torch.tensor(train_dataset.targets)
+            train_dataset.targets = torch.where(torch.isin(train_dataset.targets, torch.tensor([args.class_pos])), 1, 0)  
+
+            if args.data_classif == "PU":  
+                train_dataset.targets[idxtargets_up] = 0
+            train_datasubset_pu = torch.utils.data.Subset(train_dataset, idxs)
+
+            idxs_test = [i for i in range(len(test_dataset.targets)) if test_dataset.targets[i] in [args.class_pos, args.class_neg]]
+
+            # idxs_test = [i for i in range(len(test_dataset.targets)) if test_dataset.targets[i] == args.class_pos]
+            # idxs_test = idxs_test[:100]
+            # idxs_test_neg = [i for i in range(len(test_dataset.targets)) if test_dataset.targets[i] == args.class_neg]
+            # idxs_test.extend(idxs_test_neg)
+            # idxs_test.sort()
+            
+
+            test_dataset.targets = torch.tensor(test_dataset.targets)
+            test_dataset.targets = torch.where(torch.isin(test_dataset.targets, torch.tensor([args.class_pos])), 1, 0)
+            test_datasubset = torch.utils.data.Subset(test_dataset, idxs_test)
+
 
     elif args.dataset == "GLAUCOMA":
         from glaucoma import GLAUCOMA
@@ -292,6 +350,8 @@ if __name__ == "__main__":
 
     if args.dataset == 'CIFAR10':  
         prior = ((1-args.PU_ratio)*3/33)/(1-args.PU_ratio*3/33) if args.data_pretrain == "imbalanced" else ((1-args.PU_ratio)*2/5)/(1-args.PU_ratio*2/5)
+    elif args.dataset == 'CIFAR100':
+        prior = ((1-args.PU_ratio)*1/10)/(1-args.PU_ratio*1/10)
     elif args.dataset == 'GLAUCOMA':
         prior = ((1-args.PU_ratio)*817/2037)/(1-args.PU_ratio*817/2037) 
 
@@ -329,12 +389,12 @@ if __name__ == "__main__":
                 args, test_loader, model, criterion, optimizer
             )
             writer.add_scalar("Loss/test", loss_epoch / len(test_loader), epoch)
-            writer.add_scalar("TestScore/accuracy", accuracy_epoch / len(test_loader), epoch)
-            writer.add_scalar("TestScore/F1", f1_epoch / len(test_loader), epoch)
-            writer.add_scalar("TestScore/auc", auc_epoch / len(test_loader), epoch)
+            writer.add_scalar("TestScore/accuracy", accuracy_epoch, epoch)
+            writer.add_scalar("TestScore/F1", f1_epoch, epoch)
+            writer.add_scalar("TestScore/auc", auc_epoch, epoch)
 
             print(
-                f"[TEST]\t Loss: {round(loss_epoch / len(test_loader), 4)}\t Accuracy: {round(accuracy_epoch / len(test_loader), 4)}\t F1: {round(f1_epoch / len(test_loader), 4)}\t AUC: {round(auc_epoch / len(test_loader), 4)}"
+                f"[TEST]\t Loss: {round(loss_epoch / len(test_loader), 4)}\t Accuracy: {round(accuracy_epoch, 4)}\t F1: {round(f1_epoch, 4)}\t AUC: {round(auc_epoch, 4)}"
             )
             args.current_epoch += 1
 

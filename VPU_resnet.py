@@ -174,19 +174,26 @@ if __name__ == "__main__":
             download=True,
             transform=TransformsSimCLR(size=args.image_size).test_transform,
         )
-        if args.data_pretrain == "imbalanced":
-            idxs = []
+        if args.data_classif == "PU":
             idxtargets_up = []
             for cls in range(100):
                 idxs_cls = [i for i in range(len(train_dataset.targets)) if train_dataset.targets[i]==cls]
-                if cls not in [23]: # cloud, keep this size and shrink all other classes to 20 %
-                    if args.data_pretrain == "imbalanced":
-                        idxs_cls = idxs_cls[:int(len(idxs_cls) * 0.2)]
-                idxs.extend(idxs_cls)
-                idxs.sort()
+                # vehicles_1 = ["bicycle", "bus", "motorcycle", "pickup_truck", "train"]
+                # vehicles_2 = ["lawn_mower", "rocket", "streetcar", "tank", "tractor"]
+                if cls in [8, 13, 48, 58, 90, 41, 69, 81, 85, 89]:
+                    idxtargets_up_cls = idxs_cls[:int((1-args.PU_ratio)*len(idxs_cls))] # change here 0.2 for any other prop of labeled positive / all positives
+                    idxtargets_up.extend(idxtargets_up_cls)
+                    idxtargets_up.sort()
             idxtargets_up = torch.tensor(idxtargets_up)
-            train_dataset.targets = torch.tensor(train_dataset.targets)
-            train_datasubset_pu = torch.utils.data.Subset(train_dataset, idxs)
+
+        train_dataset.targets = torch.tensor(train_dataset.targets)
+        train_dataset.targets = torch.where(torch.isin(train_dataset.targets, torch.tensor([8, 13, 48, 58, 90, 41, 69, 81, 85, 89])), 1, 0)  
+
+        if args.data_classif == "PU":
+            train_dataset.targets[idxtargets_up] = 0
+
+        test_dataset.targets = torch.tensor(test_dataset.targets)
+        test_dataset.targets = torch.where(torch.isin(test_dataset.targets, torch.tensor([8, 13, 48, 58, 90, 41, 69, 81, 85, 89])), 1, 0)
     elif args.dataset == "CIFAR10":
         train_dataset = torchvision.datasets.CIFAR10(
             args.dataset_dir,
@@ -201,14 +208,13 @@ if __name__ == "__main__":
             transform=TransformsSimCLR(size=args.image_size).test_transform,
         )
 
-        if args.data_pretrain == "imbalanced" or args.data_classif == "PU":
+        if args.data_pretrain == "imbalanced":
             idxs = []
             idxtargets_up = []
             for cls in range(10):
                 idxs_cls = [i for i in range(len(train_dataset.targets)) if train_dataset.targets[i]==cls]
                 if cls in [0, 1, 8, 9]:
-                    if args.data_pretrain == "imbalanced":
-                        idxs_cls = idxs_cls[:750]
+                    idxs_cls = idxs_cls[:750]
                     if args.data_classif == "PU":  
                         idxtargets_up_cls = idxs_cls[:int((1-args.PU_ratio)*len(idxs_cls))] # change here 0.2 for any other prop of labeled positive / all positives
                 idxs.extend(idxs_cls)
@@ -219,14 +225,49 @@ if __name__ == "__main__":
             idxtargets_up = torch.tensor(idxtargets_up)
 
             train_dataset.targets = torch.tensor(train_dataset.targets)
-            if args.data_classif == "PU":
-                train_dataset.targets = torch.where(torch.isin(train_dataset.targets, torch.tensor([0, 1, 8, 9])), 1, 0)  
+            train_dataset.targets = torch.where(torch.isin(train_dataset.targets, torch.tensor([0, 1, 8, 9])), 1, 0)
+            if args.data_classif == "PU":  
                 train_dataset.targets[idxtargets_up] = 0
-            train_datasubset_pu = torch.utils.data.Subset(train_dataset, idxs) 
-        
-        if args.data_classif == "PU":
+            train_datasubset_pu = torch.utils.data.Subset(train_dataset, idxs)
+
             test_dataset.targets = torch.tensor(test_dataset.targets)
-            test_dataset.targets = torch.where(torch.isin(test_dataset.targets, torch.tensor([0, 1, 8, 9])), 1, 0)  
+            test_dataset.targets = torch.where(torch.isin(test_dataset.targets, torch.tensor([0, 1, 8, 9])), 1, 0)
+
+        elif "2class" in args.data_pretrain :
+            idxs = []
+            idxtargets_up = []
+            for cls in [args.class_pos, args.class_neg]:
+                idxs_cls = [i for i in range(len(train_dataset.targets)) if train_dataset.targets[i]==cls]
+                if cls == args.class_pos:
+                    if args.data_pretrain == "2class_imbalanced":
+                        idxs_cls = idxs_cls[:750]
+                    if args.data_classif == "PU":  
+                        idxtargets_up_cls = idxs_cls[:int((1-args.PU_ratio)*len(idxs_cls))] # change here 0.2 for any other prop of labeled positive / all positives
+                        idxtargets_up.extend(idxtargets_up_cls)
+                idxs.extend(idxs_cls)
+            idxs.sort()
+            idxtargets_up.sort()        
+            idxtargets_up = torch.tensor(idxtargets_up)
+
+            train_dataset.targets = torch.tensor(train_dataset.targets)
+            train_dataset.targets = torch.where(torch.isin(train_dataset.targets, torch.tensor([args.class_pos])), 1, 0)  
+
+            if args.data_classif == "PU":  
+                train_dataset.targets[idxtargets_up] = 0
+            train_datasubset_pu = torch.utils.data.Subset(train_dataset, idxs)
+
+            idxs_test = [i for i in range(len(test_dataset.targets)) if test_dataset.targets[i] in [args.class_pos, args.class_neg]]
+
+            # idxs_test = [i for i in range(len(test_dataset.targets)) if test_dataset.targets[i] == args.class_pos]
+            # idxs_test = idxs_test[:100]
+            # idxs_test_neg = [i for i in range(len(test_dataset.targets)) if test_dataset.targets[i] == args.class_neg]
+            # idxs_test.extend(idxs_test_neg)
+            # idxs_test.sort()
+            
+
+            test_dataset.targets = torch.tensor(test_dataset.targets)
+            test_dataset.targets = torch.where(torch.isin(test_dataset.targets, torch.tensor([args.class_pos])), 1, 0)
+            test_datasubset = torch.utils.data.Subset(test_dataset, idxs_test)
     else:
         raise NotImplementedError
 

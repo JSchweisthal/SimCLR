@@ -25,12 +25,11 @@ from model import load_optimizer, save_model
 from utils import yaml_config_hook
 
 def get_negative_mask(batch_size):
-    negative_mask = torch.ones((batch_size, 2 * batch_size), dtype=bool)
-    for i in range(batch_size):
+    negative_mask = torch.ones((2 * batch_size, 2 * batch_size), dtype=bool)
+    
+    for i in range(2 * batch_size):
         negative_mask[i, i] = 0
         #negative_mask[i, i + batch_size] = 0
-
-    negative_mask = torch.cat((negative_mask, negative_mask), 0)
     return negative_mask
 
 ###new
@@ -42,9 +41,10 @@ def get_mask_classes(batch_size, labels):
                 if (labels[i] == lab) and (labels[j] == lab):
                     mat[i, j] = lab
                     mat[i, j + batch_size] = lab
-            mat[i, i] = -99
 
     mat = torch.cat((mat, mat), 0)
+    for i in range(2 * batch_size):
+        mat[i, i] = 0
     return mat
 
 def train(args, train_loader, model, criterion, optimizer, writer):
