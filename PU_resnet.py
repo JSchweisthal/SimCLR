@@ -16,7 +16,7 @@ from model import load_optimizer, save_model
 
 from utils import yaml_config_hook
 
-from sklearn.metrics import confusion_matrix, f1_score, roc_auc_score
+from sklearn.metrics import f1_score, roc_auc_score
 
 
 def train(args, loader, model, criterion, optimizer):
@@ -59,15 +59,10 @@ def train(args, loader, model, criterion, optimizer):
 
 def test(args, loader, model, criterion, optimizer):
     loss_epoch = 0
-    # accuracy_epoch = 0
-    # f1_epoch = 0
-    # auc_epoch= 0
+    accuracy_epoch = 0
+    f1_epoch = 0
+    auc_epoch = 0
     model.eval()
-    
-    output = np.array([])
-    predicted = np.array([])
-    labels = np.array([])
-
     for step, (x, y) in enumerate(loader):
         model.zero_grad()
         with torch.no_grad():
@@ -75,29 +70,18 @@ def test(args, loader, model, criterion, optimizer):
             x = x.to(args.device)
             y = y.to(args.device).float()
 
-            output_step = torch.flatten(model(x)).detach()
-            loss = criterion(output_step, y)
-            predicted_step = ((torch.sign(output_step)+1)/2).int()
+            output = torch.flatten(model(x)).detach()
+            loss = criterion(output, y)
 
-            output = np.append(output, output_step.cpu().numpy())
-            predicted = np.append(predicted, predicted_step.cpu().numpy())
-            labels = np.append(labels, y.cpu().numpy())
-
-            # acc = (predicted == y).sum().item() / y.size(0)
-            # accuracy_epoch += acc
-            # f1 = f1_score(y.cpu().numpy(), predicted.cpu().numpy())
-            # f1_epoch += f1
-            # auc = roc_auc_score(y.cpu().numpy(), output.cpu().numpy())
-            # auc_epoch += auc
+            predicted = ((torch.sign(output)+1)/2).int()
+            acc = (predicted == y).sum().item() / y.size(0)
+            accuracy_epoch += acc
+            f1 = f1_score(y.cpu().numpy(), predicted.cpu().numpy())
+            f1_epoch += f1
+            auc = roc_auc_score(y.cpu().numpy(), output.cpu().numpy())
+            auc_epoch += auc
 
             loss_epoch += loss.item()
-    accuracy_epoch = (predicted == labels).sum()/ len(labels)
-    f1_epoch = f1_score(labels, predicted)
-    auc_epoch = roc_auc_score(labels, output)
-
-    conf_mat = confusion_matrix(labels, predicted).ravel()
-    print(f"TN: {conf_mat[0]}, FP: {conf_mat[1]}, FN: {conf_mat[2]}, TP: {conf_mat[3]}")
-
 
     return loss_epoch, accuracy_epoch, f1_epoch, auc_epoch
 
@@ -351,7 +335,7 @@ if __name__ == "__main__":
     if args.dataset == 'CIFAR10':  
         prior = ((1-args.PU_ratio)*3/33)/(1-args.PU_ratio*3/33) if args.data_pretrain == "imbalanced" else ((1-args.PU_ratio)*2/5)/(1-args.PU_ratio*2/5)
     elif args.dataset == 'CIFAR100':
-        prior = ((1-args.PU_ratio)*1/10)/(1-args.PU_ratio*1/10)
+            prior = ((1-args.PU_ratio)*1/10)/(1-args.PU_ratio*1/10)
     elif args.dataset == 'GLAUCOMA':
         prior = ((1-args.PU_ratio)*817/2037)/(1-args.PU_ratio*817/2037) 
 
@@ -389,12 +373,12 @@ if __name__ == "__main__":
                 args, test_loader, model, criterion, optimizer
             )
             writer.add_scalar("Loss/test", loss_epoch / len(test_loader), epoch)
-            writer.add_scalar("TestScore/accuracy", accuracy_epoch, epoch)
-            writer.add_scalar("TestScore/F1", f1_epoch, epoch)
-            writer.add_scalar("TestScore/auc", auc_epoch, epoch)
+            writer.add_scalar("TestScore/accuracy", accuracy_epoch / len(test_loader), epoch)
+            writer.add_scalar("TestScore/F1", f1_epoch / len(test_loader), epoch)
+            writer.add_scalar("TestScore/auc", auc_epoch / len(test_loader), epoch)
 
             print(
-                f"[TEST]\t Loss: {round(loss_epoch / len(test_loader), 4)}\t Accuracy: {round(accuracy_epoch, 4)}\t F1: {round(f1_epoch, 4)}\t AUC: {round(auc_epoch, 4)}"
+                f"[TEST]\t Loss: {round(loss_epoch / len(test_loader), 4)}\t Accuracy: {round(accuracy_epoch / len(test_loader), 4)}\t F1: {round(f1_epoch / len(test_loader), 4)}\t AUC: {round(auc_epoch / len(test_loader), 4)}"
             )
             args.current_epoch += 1
 
