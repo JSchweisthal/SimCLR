@@ -217,7 +217,7 @@ if __name__ == "__main__":
             args.dataset_dir,
             train=True,
             download=True,
-            transform=TransformsSimCLR(size=args.image_size).test_transform,
+            transform= TransformsSimCLR(size=args.image_size) if args.augment_data else TransformsSimCLR(size=args.image_size).test_transform,
         )
         test_dataset = torchvision.datasets.CIFAR10(
             args.dataset_dir,
