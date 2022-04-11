@@ -314,6 +314,9 @@ if __name__ == "__main__":
     if args.data_pretrain == "all":
             train_datasubset_pu = train_dataset
 
+    if "2class" not in  args.data_pretrain:
+            test_datasubset = test_dataset
+
     train_loader = torch.utils.data.DataLoader(
         train_datasubset_pu, #train_dataset,
         batch_size=args.batch_size,
@@ -323,7 +326,7 @@ if __name__ == "__main__":
     )
 
     test_loader = torch.utils.data.DataLoader(
-        test_dataset,
+        test_datasubset,
         batch_size=args.batch_size,
         shuffle=False,
         drop_last=True,
