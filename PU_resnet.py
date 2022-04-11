@@ -349,7 +349,7 @@ if __name__ == "__main__":
     # criterion = torch.nn.CrossEntropyLoss()
 
     if args.dataset == 'CIFAR10':  
-        prior = ((1-args.PU_ratio)*3/33)/(1-args.PU_ratio*3/33) if args.data_pretrain == "imbalanced" else ((1-args.PU_ratio)*2/5)/(1-args.PU_ratio*2/5)
+        prior = ((1-args.PU_ratio)*3/33)/(1-args.PU_ratio*3/33) if "imbalanced" in args.data_pretrain else ((1-args.PU_ratio)*2/5)/(1-args.PU_ratio*2/5)
     elif args.dataset == 'CIFAR100':
         prior = ((1-args.PU_ratio)*1/10)/(1-args.PU_ratio*1/10)
     elif args.dataset == 'GLAUCOMA':
