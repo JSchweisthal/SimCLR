@@ -13,7 +13,7 @@ image_size: 224
 workers: 4 # here were 16
 start_epoch: 0
 epochs: 100
-dataset: "CIFAR10" # STL10
+dataset: "CIFAR10" # STL10 
 
 # pretrain: True 
 
