@@ -14,6 +14,8 @@ from utils import yaml_config_hook
 
 from sklearn.metrics import confusion_matrix, f1_score, roc_auc_score
 
+from torch.utils.tensorboard import SummaryWriter
+
 
 def inference(loader, simclr_model, device):
     feature_vector = []
@@ -183,7 +185,6 @@ class OversampledPULoss(nn.Module):
         negative_risk =  (1-prior_prime)/(n_unlabeled*(1-prior)) * torch.sum(y_unlabeled) - ((1-prior_prime)*prior/(n_positive*(1-prior))) *torch.sum(y_positive_inv)
 
         if negative_risk < -self.beta and self.nnPU:
-            print('negative risk below zero')
             return -self.gamma * negative_risk 
         else:
             return positive_risk + negative_risk
@@ -434,6 +435,10 @@ if __name__ == "__main__":
         train_X, train_y, test_X, test_y, args.logistic_batch_size
     )
 
+    if args.nr == 0:
+        name_run = args.name_run if hasattr(args, 'name_run') else args.config
+        writer = SummaryWriter('runs_final/' + args.name_run)
+
     print(f"File: {os.path.basename(__file__)}\nConfig: {args.config}\nStart Training...")
     for epoch in range(args.logistic_epochs):
         loss_epoch, accuracy_epoch, f1_epoch = train(
@@ -443,6 +448,8 @@ if __name__ == "__main__":
             f"Epoch [{epoch}/{args.logistic_epochs}]\t Loss: {loss_epoch / len(arr_train_loader)}"
             # \t Accuracy: {accuracy_epoch / len(arr_train_loader)}\t F1: {f1_epoch / len(arr_train_loader)}
         )
+        writer.add_scalar("Loss/train", loss_epoch / len(train_loader), epoch)
+
         # final testing
         loss_epoch, accuracy_epoch, f1_epoch, auc_epoch  = test(
             args, arr_test_loader, model, criterion, optimizer
@@ -450,6 +457,11 @@ if __name__ == "__main__":
         print(
             f"[TEST]:\t Loss: {loss_epoch / len(arr_test_loader)}\t Accuracy: {accuracy_epoch}\t F1: {f1_epoch}\t AUC: {auc_epoch}"
         )
+        writer.add_scalar("Loss/test", loss_epoch / len(test_loader), epoch)
+        writer.add_scalar("TestScore/accuracy", accuracy_epoch, epoch)
+        writer.add_scalar("TestScore/F1", f1_epoch, epoch)
+        writer.add_scalar("TestScore/auc", auc_epoch, epoch)
+
     # final testing
     loss_epoch, accuracy_epoch, f1_epoch, auc_epoch  = test(
         args, arr_test_loader, model, criterion, optimizer
