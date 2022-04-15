@@ -417,6 +417,12 @@ if __name__ == "__main__":
             criterion = nn.BCEWithLogitsLoss(pos_weight=torch.tensor(1220/817))
         else:
             criterion = nn.BCEWithLogitsLoss()
+    
+    try:
+        prior = args.prior_distortion_rate * prior
+        print(f'Prior Distortion Rate: {args.prior_distortion_rate}')
+    except:
+        pass
 
     print("### Creating features from pre-trained context model ###")
     (train_X, train_y, test_X, test_y) = get_features(

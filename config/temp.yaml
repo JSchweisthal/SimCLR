@@ -66,3 +66,5 @@ tau_plus: 0.1
 
 # class_pos: 0
 # class_neg: 2
+
+prior_distortion_rate: 0.8
