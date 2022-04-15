@@ -183,6 +183,7 @@ class OversampledPULoss(nn.Module):
         negative_risk =  (1-prior_prime)/(n_unlabeled*(1-prior)) * torch.sum(y_unlabeled) - ((1-prior_prime)*prior/(n_positive*(1-prior))) *torch.sum(y_positive_inv)
 
         if negative_risk < -self.beta and self.nnPU:
+            print('negative risk below zero')
             return -self.gamma * negative_risk 
         else:
             return positive_risk + negative_risk
