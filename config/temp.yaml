@@ -67,6 +67,8 @@ tau_plus: 0.1
 # class_pos: 0
 # class_neg: 2
 
+augment_data: False
+
 prior_distortion_rate: 0.8
 
 name_run: cifar10_imbalanced_overnnpu_priormis_0.8 
