@@ -29,7 +29,7 @@ temperature: 0.5 # see appendix B.7.: Optimal temperature under different batch 
 weight_decay: 1.0e-6 # "optimized using LARS [...] and weight decay of 10−6"
 
 # reload options
-model_path: "logs/CIFAR10/imbalanced/debiased" # set to the directory containing `checkpoint_##.tar` 
+model_path: "logs/CIFAR10/imbalanced/OverNNPU" # set to the directory containing `checkpoint_##.tar` 
 # model_path: "save" # set to the directory containing `checkpoint_##.tar` 
 # model_num: 200 # set to checkpoint number
 epoch_num: 100 # set to checkpoint number
@@ -69,4 +69,4 @@ tau_plus: 0.1
 
 prior_distortion_rate: 0.8
 
-name_run: cifar10_imbalanced_priormis_0.8 
+name_run: cifar10_imbalanced_overnnpu_priormis_0.8 

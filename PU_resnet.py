@@ -358,11 +358,18 @@ if __name__ == "__main__":
     elif args.dataset == 'GLAUCOMA':
         prior = ((1-args.PU_ratio)*817/2037)/(1-args.PU_ratio*817/2037) 
 
+    try:
+        prior = args.prior_distortion_rate * prior
+        print(f'Prior Distortion Rate: {args.prior_distortion_rate}')
+    except:
+        pass
+    
     criterion = OversampledPULoss(prior=prior, prior_prime=0.5, nnPU=True) 
 
     writer = None
     if args.nr == 0:
-        writer = SummaryWriter('runs_final/' + args.config)
+        name_run = args.name_run if hasattr(args, 'name_run') else args.config
+        writer = SummaryWriter('runs_final/' + args.name_run)
 
     args.global_step = 0
     args.current_epoch = 0
