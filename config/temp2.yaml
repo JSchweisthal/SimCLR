@@ -71,4 +71,4 @@ augment_data: False
 
 # prior_distortion_rate: 0.8
 
-name_run: cifar10_imbalanced_bce
+name_run: cifar10_imbalanced_debiased_bce
