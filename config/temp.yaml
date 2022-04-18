@@ -69,6 +69,7 @@ tau_plus: 0.1
 
 augment_data: False
 
-prior_distortion_rate: 5.0
+prior_distortion_rate: 1.0
 
-name_run: cifar10_imbalanced_overnnpu_priormis_5.0
+name_run: cifar10_imbalanced_overnnpu
+#_priormis_1.0
