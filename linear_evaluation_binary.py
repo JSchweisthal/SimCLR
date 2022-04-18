@@ -413,18 +413,19 @@ if __name__ == "__main__":
         elif args.dataset == 'GLAUCOMA':
             prior = ((1-args.PU_ratio)*817/2037)/(1-args.PU_ratio*817/2037) 
 
+        try:
+            prior = args.prior_distortion_rate * prior
+            print(f'Prior Distortion Rate: {args.prior_distortion_rate}')
+        except:
+            pass
         criterion = OversampledPULoss(prior=prior, prior_prime=0.5, nnPU=True) 
+
     elif args.data_classif == 'binary':
         if args.dataset == 'GLAUCOMA':
             criterion = nn.BCEWithLogitsLoss(pos_weight=torch.tensor(1220/817))
         else:
             criterion = nn.BCEWithLogitsLoss()
     
-    try:
-        prior = args.prior_distortion_rate * prior
-        print(f'Prior Distortion Rate: {args.prior_distortion_rate}')
-    except:
-        pass
 
     print("### Creating features from pre-trained context model ###")
     (train_X, train_y, test_X, test_y) = get_features(

@@ -351,20 +351,29 @@ if __name__ == "__main__":
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-5) # learning rate changed!
     # criterion = torch.nn.CrossEntropyLoss()
 
-    if args.dataset == 'CIFAR10':  
-        prior = ((1-args.PU_ratio)*3/33)/(1-args.PU_ratio*3/33) if "imbalanced" in args.data_pretrain else ((1-args.PU_ratio)*2/5)/(1-args.PU_ratio*2/5)
-    elif args.dataset == 'CIFAR100':
-        prior = ((1-args.PU_ratio)*1/10)/(1-args.PU_ratio*1/10)
-    elif args.dataset == 'GLAUCOMA':
-        prior = ((1-args.PU_ratio)*817/2037)/(1-args.PU_ratio*817/2037) 
+    if args.data_classif == 'PU':
+        if args.dataset == 'CIFAR10':  
+            prior = ((1-args.PU_ratio)*3/33)/(1-args.PU_ratio*3/33) if "imbalanced" in args.data_pretrain else ((1-args.PU_ratio)*2/5)/(1-args.PU_ratio*2/5)
+        elif args.dataset == 'CIFAR100':
+            prior = ((1-args.PU_ratio)*1/10)/(1-args.PU_ratio*1/10)
+        elif args.dataset == 'GLAUCOMA':
+            prior = ((1-args.PU_ratio)*817/2037)/(1-args.PU_ratio*817/2037) 
 
-    try:
-        prior = args.prior_distortion_rate * prior
-        print(f'Prior Distortion Rate: {args.prior_distortion_rate}')
-    except:
-        pass
-    
-    criterion = OversampledPULoss(prior=prior, prior_prime=0.5, nnPU=True) 
+        try:
+            prior = args.prior_distortion_rate * prior
+            print(f'Prior Distortion Rate: {args.prior_distortion_rate}')
+        except:
+            pass
+        
+        criterion = OversampledPULoss(prior=prior, prior_prime=0.5, nnPU=True) 
+
+    elif args.data_classif == 'binary':
+        if args.dataset == 'GLAUCOMA':
+            criterion = nn.BCEWithLogitsLoss(pos_weight=torch.tensor(1220/817))
+        else:
+            criterion = nn.BCEWithLogitsLoss()
+
+
 
     writer = None
     if args.nr == 0:
