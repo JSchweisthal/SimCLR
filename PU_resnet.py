@@ -370,8 +370,9 @@ if __name__ == "__main__":
     elif args.data_classif == 'binary':
         if args.dataset == 'GLAUCOMA':
             criterion = nn.BCEWithLogitsLoss(pos_weight=torch.tensor(1220/817))
-        else:
-            criterion = nn.BCEWithLogitsLoss()
+        elif args.dataset == 'CIFAR10':  
+            pos_weight = (10/1) if "imbalanced" in args.data_pretrain else (3/2)
+            criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
 
 

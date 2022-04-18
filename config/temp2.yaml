@@ -48,7 +48,7 @@ logistic_epochs: 100 #500
 
 # option for full or imbalanced Pu Subset
 data_pretrain: "imbalanced" #options: "all", "imbalanced", "2class", "2class_imbalanced"
-data_classif: "PU" #options: "binary", "PU"
+data_classif: "binary" #options: "binary", "PU"
 # # PU ratio (labeled positives / all positives for binary PU setting)
 PU_ratio: 0.2
 
@@ -69,6 +69,6 @@ tau_plus: 0.1
 
 augment_data: False
 
-prior_distortion_rate: 0.8
+# prior_distortion_rate: 0.8
 
-name_run: cifar10_imbalanced_debiased_priormis_0.8
+name_run: cifar10_imbalanced_bce
