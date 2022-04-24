@@ -65,4 +65,4 @@ debiased: True
 tau_plus: 0.074
 
 
-name_run: cifar10_imbalanced_connpu
+name_run: cifar10_imbalanced_debiased
