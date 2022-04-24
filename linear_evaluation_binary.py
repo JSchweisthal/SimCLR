@@ -426,6 +426,9 @@ if __name__ == "__main__":
         elif args.dataset == 'CIFAR10':  
             pos_weight = torch.tensor(10/1) if "imbalanced" in args.data_pretrain else torch.tensor(3/2)
             criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+        elif args.dataset == 'CIFAR100':  
+            pos_weight = torch.tensor(9/1)
+            criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
     
 
     print("### Creating features from pre-trained context model ###")
