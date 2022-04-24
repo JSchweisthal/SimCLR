@@ -4,7 +4,7 @@ gpus: 1 # I recommend always assigning 1 GPU to 1 node
 nr: 0 # machine nr. in node (0 -- nodes - 1)
 dataparallel: 0 # Use DataParallel instead of DistributedDataParallel
 workers: 4 #8 didn't work
-dataset_dir: "../data/cifar10"
+dataset_dir: "../data/cifar100"
 
 # train options
 seed: 42 # sacred handles automatic seeding when passed in the config
@@ -13,7 +13,7 @@ image_size: 224
 workers: 4 # here were 16
 start_epoch: 0
 epochs: 100
-dataset: "CIFAR10" # STL10 
+dataset: "CIFAR100" # STL10 
 
 # pretrain: True 
 
@@ -29,7 +29,7 @@ temperature: 0.5 # see appendix B.7.: Optimal temperature under different batch 
 weight_decay: 1.0e-6 # "optimized using LARS [...] and weight decay of 10−6"
 
 # reload options
-model_path: "logs/CIFAR10/imbalanced/OverNNPU/priormis" # set to the directory containing `checkpoint_##.tar` 
+model_path: "logs/CIFAR100/all/debiased" # set to the directory containing `checkpoint_##.tar` 
 # model_path: "save" # set to the directory containing `checkpoint_##.tar` 
 # model_num: 200 # set to checkpoint number
 epoch_num: 100 # set to checkpoint number
@@ -47,8 +47,8 @@ logistic_epochs: 100 #500
 ######################################
 
 # option for full or imbalanced Pu Subset
-data_pretrain: "imbalanced" #options: "all", "imbalanced", "2class", "2class_imbalanced"
-data_classif: "PU" #options: "binary", "PU"
+data_pretrain: "all" #options: "all", "imbalanced", "2class", "2class_imbalanced"
+data_classif: "binary" #options: "binary", "PU"
 # # PU ratio (labeled positives / all positives for binary PU setting)
 PU_ratio: 0.2
 
@@ -69,6 +69,6 @@ tau_plus: 0.1
 
 augment_data: False
 
-prior_distortion_rate: 3.0
+prior_distortion_rate: 1.0
 
-name_run: cifar10_imbalanced_debiased_priormis_3.0
+name_run: cifar100_bce
