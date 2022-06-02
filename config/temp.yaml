@@ -62,7 +62,7 @@ PU_ratio: 0.2
 
 ### debiased
 debiased: True
-tau_plus: 0.074
+tau_plus: 0.1
 
 
 name_run: cifar10_imbalanced_debiased
