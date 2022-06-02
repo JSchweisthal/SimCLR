@@ -72,6 +72,6 @@ augment_data: False
 prior_distortion_rate: 1.0
 
 # PU loss
-loss_PU: "nnPU"
+loss_PU: "binary"
 
-name_run: cifar10_debiased_nnPU
+name_run: cifar10_debiased_PU_bce
