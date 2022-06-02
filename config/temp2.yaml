@@ -4,7 +4,7 @@ gpus: 1 # I recommend always assigning 1 GPU to 1 node
 nr: 0 # machine nr. in node (0 -- nodes - 1)
 dataparallel: 0 # Use DataParallel instead of DistributedDataParallel
 workers: 4 #8 didn't work
-dataset_dir: "../data/cifar100"
+dataset_dir: "../data/cifar10"
 
 # train options
 seed: 42 # sacred handles automatic seeding when passed in the config
@@ -13,7 +13,7 @@ image_size: 224
 workers: 4 # here were 16
 start_epoch: 0
 epochs: 100
-dataset: "CIFAR100" # STL10 
+dataset: "CIFAR10" # STL10 
 
 # pretrain: True 
 
@@ -74,4 +74,4 @@ prior_distortion_rate: 1.0
 # PU loss
 loss_PU: "nnPU"
 
-name_run: cifar100_debiased_nnPU
+name_run: cifar10_debiased_nnPU
