@@ -428,12 +428,14 @@ if __name__ == "__main__":
         except:
             pass
         
-        oversample = True
-        if args.loss_PU == 'nnPU':
-            oversample = False
-        criterion = OversampledPULoss(prior=prior, prior_prime=0.5, nnPU=True, oversample=oversample) 
-        if args.loss_PU == 'binary':
-            criterion = nn.BCEWithLogitsLoss() # pos_weight=torch.tensor(1220/817)
+        if hasattr(args, 'loss_PU'):
+            if args.loss_PU == 'nnPU':
+                oversample = False
+                criterion = OversampledPULoss(prior=prior, prior_prime=0.5, nnPU=True, oversample=oversample) 
+            if args.loss_PU == 'binary':
+                criterion = nn.BCEWithLogitsLoss() # pos_weight=torch.tensor(1220/817)
+        else: 
+            criterion = OversampledPULoss(prior=prior, prior_prime=0.5, nnPU=True, oversample=True) 
 
     elif args.data_classif == 'binary':
         if args.dataset == 'GLAUCOMA':
