@@ -437,7 +437,7 @@ if __name__ == "__main__":
                 criterion = nn.BCEWithLogitsLoss() # pos_weight=torch.tensor(1220/817)
             elif args.loss_PU == 'wBCE':
                 pos_weight = torch.tensor((10+ 1-args.PU_ratio)/args.PU_ratio) if "imbalanced" in args.data_pretrain else torch.tensor(torch.tensor((1.5+ 1-args.PU_ratio)/args.PU_ratio))
-                criterion = nn.BCEWithLogitsLoss(pos_weight) # pos_weight=torch.tensor(1220/817)
+                criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight) # pos_weight=torch.tensor(1220/817)
         else: 
             criterion = OversampledPULoss(prior=prior, prior_prime=0.5, nnPU=True, oversample=True) 
 
