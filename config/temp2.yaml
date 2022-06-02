@@ -29,7 +29,7 @@ temperature: 0.5 # see appendix B.7.: Optimal temperature under different batch 
 weight_decay: 1.0e-6 # "optimized using LARS [...] and weight decay of 10−6"
 
 # reload options
-model_path: "logs/CIFAR100/all/debiased" # set to the directory containing `checkpoint_##.tar` 
+model_path: "logs/imbPU" # set to the directory containing `checkpoint_##.tar` 
 # model_path: "save" # set to the directory containing `checkpoint_##.tar` 
 # model_num: 200 # set to checkpoint number
 epoch_num: 100 # set to checkpoint number
@@ -47,8 +47,8 @@ logistic_epochs: 100 #500
 ######################################
 
 # option for full or imbalanced Pu Subset
-data_pretrain: "all" #options: "all", "imbalanced", "2class", "2class_imbalanced"
-data_classif: "binary" #options: "binary", "PU"
+data_pretrain: "imbalanced" #options: "all", "imbalanced", "2class", "2class_imbalanced"
+data_classif: "PU" #options: "binary", "PU"
 # # PU ratio (labeled positives / all positives for binary PU setting)
 PU_ratio: 0.2
 
@@ -71,4 +71,7 @@ augment_data: False
 
 prior_distortion_rate: 1.0
 
-name_run: cifar100_debiased_bce
+# PU loss
+loss_PU: "nnPU"
+
+name_run: cifar100_debiased_nnPU

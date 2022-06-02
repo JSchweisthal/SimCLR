@@ -148,7 +148,7 @@ def test(args, loader, model, criterion, optimizer):
 class OversampledPULoss(nn.Module):
     """wrapper of loss function for PU learning"""
 
-    def __init__(self, prior, prior_prime=0.5, loss=(lambda x: torch.sigmoid(-x)), gamma=1, beta=0, nnPU=True):
+    def __init__(self, prior, prior_prime=0.5, loss=(lambda x: torch.sigmoid(-x)), gamma=1, beta=0, nnPU=True, oversample=True):
         super(OversampledPULoss,self).__init__()
         if not 0 < prior < 1:
             raise NotImplementedError("The class prior should be in (0, 1)")
@@ -161,6 +161,7 @@ class OversampledPULoss(nn.Module):
         self.positive = 1
         self.unlabeled = -1
         self.min_count = torch.tensor(1.)
+        self.oversample = oversample
     
     def forward(self, inp, target, prior=None, prior_prime=None, test=False):  
         # assert(inp.shape == target.shape)
@@ -181,13 +182,21 @@ class OversampledPULoss(nn.Module):
         y_positive_inv = self.loss_func(-positive*inp) * positive
         y_unlabeled = self.loss_func(-unlabeled*inp) * unlabeled
 
-        positive_risk = prior_prime/n_positive * torch.sum(y_positive)
-        negative_risk =  (1-prior_prime)/(n_unlabeled*(1-prior)) * torch.sum(y_unlabeled) - ((1-prior_prime)*prior/(n_positive*(1-prior))) *torch.sum(y_positive_inv)
+        if self.oversample:
+            positive_risk = prior_prime/n_positive * torch.sum(y_positive)
+            negative_risk =  (1-prior_prime)/(n_unlabeled*(1-prior)) * torch.sum(y_unlabeled) - ((1-prior_prime)*prior/(n_positive*(1-prior))) *torch.sum(y_positive_inv)
+        else:
+            positive_risk = self.prior * torch.sum(y_positive)/ n_positive
+            negative_risk = - self.prior *torch.sum(y_positive_inv)/ n_positive + torch.sum(y_unlabeled)/n_unlabeled
+
+       
 
         if negative_risk < -self.beta and self.nnPU:
             return -self.gamma * negative_risk 
         else:
             return positive_risk + negative_risk
+
+
 
 
 if __name__ == "__main__":
@@ -418,7 +427,13 @@ if __name__ == "__main__":
             print(f'Prior Distortion Rate: {args.prior_distortion_rate}')
         except:
             pass
-        criterion = OversampledPULoss(prior=prior, prior_prime=0.5, nnPU=True) 
+        
+        oversample = True
+        if args.loss_PU == 'nnPU':
+            oversample = False
+        criterion = OversampledPULoss(prior=prior, prior_prime=0.5, nnPU=True, oversample=oversample) 
+        if args.loss_PU == 'binary':
+            criterion = nn.BCEWithLogitsLoss() # pos_weight=torch.tensor(1220/817)
 
     elif args.data_classif == 'binary':
         if args.dataset == 'GLAUCOMA':
