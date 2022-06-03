@@ -47,7 +47,7 @@ logistic_epochs: 100 #500
 ######################################
 
 # option for full or imbalanced Pu Subset
-data_pretrain: "all" #options: "all", "imbalanced", "2class", "2class_imbalanced"
+data_pretrain: "imbalanced" #options: "all", "imbalanced", "2class", "2class_imbalanced"
 data_classif: "PU" #options: "binary", "PU"
 # # PU ratio (labeled positives / all positives for binary PU setting)
 PU_ratio: 0.2
@@ -65,4 +65,4 @@ debiased: True
 tau_plus: 0.1
 
 
-name_run: stl10_debiased
+name_run: cifar10_debiasedstl10_overnnpu
