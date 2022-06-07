@@ -419,7 +419,8 @@ if __name__ == "__main__":
     # except: pass
 
     n_classes = 1
-    model = LogisticRegression(simclr_model.n_features, n_classes)
+    n_features = 2048
+    model = LogisticRegression(n_features, n_classes)
     model = model.to(args.device)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=3e-4)
