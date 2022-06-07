@@ -26,7 +26,7 @@ def inference(loader, simclr_model, device):
 
         # get encoding
         with torch.no_grad():
-            h, _, z, _ = simclr_model(x, x)
+            h = simclr_model(x)[0]
 
         h = h.detach()
 
