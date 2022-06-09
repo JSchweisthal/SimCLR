@@ -29,7 +29,7 @@ temperature: 0.5 # see appendix B.7.: Optimal temperature under different batch 
 weight_decay: 1.0e-6 # "optimized using LARS [...] and weight decay of 10−6"
 
 # reload options
-model_path: "logs/GLAUCOMA/all/base" # set to the directory containing `checkpoint_##.tar` 
+model_path: "logs/GLAUCOMA/all/debiased" # set to the directory containing `checkpoint_##.tar` 
 # model_path: "save" # set to the directory containing `checkpoint_##.tar` 
 # model_num: 200 # set to checkpoint number
 epoch_num: 100 # set to checkpoint number
@@ -75,4 +75,4 @@ prior_distortion_rate: 1.0
 loss_PU: "BCE"
 
 
-name_run: glaucoma_ntxent_PU_bce
+name_run: glaucoma_debiased_PU_bce
