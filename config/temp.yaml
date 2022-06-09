@@ -41,13 +41,13 @@ fp16_opt_level: "O2"
 
 # logistic regression options
 logistic_batch_size: 512
-logistic_epochs: 500 #500
+logistic_epochs: 200 #500
 
 
 ######################################
 
 # option for full or imbalanced Pu Subset
-data_pretrain: "imbalanced" #options: "all", "imbalanced", "2class", "2class_imbalanced"
+data_pretrain: "all" #options: "all", "imbalanced", "2class", "2class_imbalanced"
 data_classif: "PU" #options: "binary", "PU"
 # # PU ratio (labeled positives / all positives for binary PU setting)
 PU_ratio: 0.2
