@@ -29,7 +29,7 @@ temperature: 0.5 # see appendix B.7.: Optimal temperature under different batch 
 weight_decay: 1.0e-6 # "optimized using LARS [...] and weight decay of 10−6"
 
 # reload options
-model_path: "logs/STL10/full/debiased" # set to the directory containing `checkpoint_##.tar` 
+model_path: "logs/GLAUCOMA/all/base" # set to the directory containing `checkpoint_##.tar` 
 # model_path: "save" # set to the directory containing `checkpoint_##.tar` 
 # model_num: 200 # set to checkpoint number
 epoch_num: 100 # set to checkpoint number
@@ -41,7 +41,7 @@ fp16_opt_level: "O2"
 
 # logistic regression options
 logistic_batch_size: 512
-logistic_epochs: 200 #500
+logistic_epochs: 100 #500
 
 
 ######################################
@@ -72,7 +72,7 @@ augment_data: False
 prior_distortion_rate: 1.0
 
 # PU loss
-# loss_PU: "wBCE"
+loss_PU: "BCE"
 
 
-name_run: glaucoma_simclr_imagenet_onnpu
+name_run: glaucoma_ntxent_PU_bce
