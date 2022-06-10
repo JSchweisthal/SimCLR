@@ -341,6 +341,8 @@ if __name__ == "__main__":
             test_datasubset = torch.utils.data.Subset(test_dataset, idxs_test)
         
         else:
+            train_dataset.targets = torch.tensor(train_dataset.targets)
+            train_dataset.targets = torch.where(torch.isin(train_dataset.targets, torch.tensor([0, 1, 8, 9])), 1, 0)
             test_dataset.targets = torch.tensor(test_dataset.targets)
             test_dataset.targets = torch.where(torch.isin(test_dataset.targets, torch.tensor([0, 1, 8, 9])), 1, 0)
 
