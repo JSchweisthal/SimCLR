@@ -341,8 +341,26 @@ if __name__ == "__main__":
             test_datasubset = torch.utils.data.Subset(test_dataset, idxs_test)
         
         else:
+            idxs = []
+            idxtargets_up = []
+            for cls in range(10):
+                idxs_cls = [i for i in range(len(train_dataset.targets)) if train_dataset.targets[i]==cls]
+                if cls in [0, 1, 8, 9]:
+                    if args.data_classif == "PU":  
+                        idxtargets_up_cls = idxs_cls[:int((1-args.PU_ratio)*len(idxs_cls))] # change here 0.2 for any other prop of labeled positive / all positives
+                idxs.extend(idxs_cls)
+                idxs.sort()
+                if args.data_classif == "PU":  
+                    idxtargets_up.extend(idxtargets_up_cls)
+                    idxtargets_up.sort()
+            idxtargets_up = torch.tensor(idxtargets_up)
+
             train_dataset.targets = torch.tensor(train_dataset.targets)
             train_dataset.targets = torch.where(torch.isin(train_dataset.targets, torch.tensor([0, 1, 8, 9])), 1, 0)
+            if args.data_classif == "PU":  
+                train_dataset.targets[idxtargets_up] = 0
+            train_datasubset_pu = torch.utils.data.Subset(train_dataset, idxs)
+
             test_dataset.targets = torch.tensor(test_dataset.targets)
             test_dataset.targets = torch.where(torch.isin(test_dataset.targets, torch.tensor([0, 1, 8, 9])), 1, 0)
 
